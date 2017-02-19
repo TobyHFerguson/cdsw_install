@@ -1,7 +1,19 @@
 # cdsw_install
 Automated installed of CDSW with Director 2.3
 
-The config file (`cdsw.conf`) will automatically install a cluster including CDSW. You need to search for `REPLACE_ME` within the file and make the necessary edits.
+The config file (`cdsw.conf`) will automatically install a cluster including CDSW. 
+
+# Instructions
++ Modify the `cdsw.conf` file - You need to search for `REPLACE_ME` within the file and make the necessary edits.
++ Use Director 2.3 with the `cdsw.conf` file to create a cluster
++ When complete ssh into the cdsw instance and start up cdsw:
+```sh
+# cdsw init
+....
+# watch cdsw status
+```
++ Connect to cdsw with the URL as described below under XIP.io tricks
+
 
 ## Limitations
 Uses fixed AMI that has AES256 JCE in it.
