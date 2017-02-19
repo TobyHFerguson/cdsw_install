@@ -1,11 +1,11 @@
 # cdsw_install
 Automated installed of CDSW with Director 2.3
 
-The config file (`cdsw.conf`) will automatically install a cluster including CDSW. 
+The config file (`aws.conf`) will automatically install a cluster including CDSW. 
 
 # Instructions
-+ Modify the `cdsw.conf` file - You need to search for `REPLACE_ME` within the file and make the necessary edits.
-+ Use Director 2.3 with the `cdsw.conf` file to create a cluster
++ Modify the `aws.conf` file - You need to search for `REPLACE_ME` within the file and make the necessary edits.
++ Use Director 2.3 with the `aws.conf` file to create a cluster
 + When complete ssh into the cdsw instance and start up cdsw:
 ```sh
 # cdsw init
