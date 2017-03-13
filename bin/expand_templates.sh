@@ -1,3 +1,16 @@
+[ -f secrets ] || {
+cat -  >&2 -<<EOF
+No file called "secrets" found'. It must contain this line:
+
+AWS_SECRET_ACCESS_KEY=YOUR KEY VALUE HERE
+
+and you need to replace 'YOUR KEY VALUE HERE' appropriately.
+
+...exiting
+EOF
+exit 1
+}
+
 . envars
 . secrets
 
