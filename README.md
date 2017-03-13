@@ -1,22 +1,44 @@
 # cdsw_install
 Automated installed of CDSW with Director 2.3
 
-The config file (`aws.conf`) will automatically install a cluster including CDSW. 
+This repo will create a Cloudera Director conf file (`aws.conf`) in the current directory that can be used to construct a
+CDSW cluster.
 
-# Instructions
-+ Modify the `aws.conf` file - You need to search for `REPLACE_ME` within the file and make the necessary edits.
-+ Use Director 2.3 with the `aws.conf` file to create a cluster
-+ When complete ssh into the cdsw instance and start up cdsw:
-```sh
-# cdsw init
-....
-# watch cdsw status
+It uses templating (as opposed to HOCON substitution variables) because of the need to replace variables in the base `aws.conf`
+file in multi-line strings (something that the HOCON format can't do).
+
+## Details
+### Overview
+This repo contains scripts (in `bin`) and templates (in `templates`) which will create expanded files using the variables defined in `envars` and `secrets`.
+
+In particular it will create `aws.conf
+
+### Instructions
+Modify the envars file with the relevant values (I'm assuming you're familiar with Director and AWS!)
+
+Note that the `SSH_KEYFILE` argument is assumed to be the full path to a private key file.
+
+Construct a file `secrets` with a line like this in it, replacing `KEY_YOU_WANT_TO_KEEP_SECRET` with your `AWS_SECRET_ACCESS_KEY` value:
 ```
-+ Connect to cdsw with the URL as described below under XIP.io tricks
+AWS_SECRET_ACCESS_KEY=KEY_YOU_WANT_TO_KEEP SECRET
+```
 
+(this file is ignored by git, so helps prevent you checking in secrets into your git repo)
+
+Then run `bin/expand_templates.sh` and it will expand out all the files from the `templates` directory that end with `.template` into equivalent files in the current director, replacing envars as they go, and putting in a 'special value' for the SSH keyfile (ugh - I hate special cases!), 
+
+Then use the `aws.conf` file created to make your CDSW installation
+
+### Git
+The `secrets` file is ignored by Git, so you can put your AWS_SECRET_KEY in there and not get caught out by inadvertently committing your secrets into a public git repository (which will cause Amazon to send you a bunch of emails and invalidate that key!)
+
+### Testing
+The testing directory contains a simple set of test files that will replace the string `REPLACE_ME_XXXX` with `REPLACE_ME_XXXX_TEST`
 
 ## Limitations
-Uses fixed AMI that has AES256 JCE in it.
+Requires a kerberize cluster (not certain this is needed anymore, but `aws.conf.template` currently has kerberos in it.
+
+Uses a fixed AMI that has AES256 JCE in it.
 
 Only tested in AWS us-east-1 using the exact network etc. etc. as per the file.
 
