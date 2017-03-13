@@ -25,7 +25,7 @@ AWS_SECRET_ACCESS_KEY=KEY_YOU_WANT_TO_KEEP SECRET
 
 (this file is ignored by git, so helps prevent you checking in secrets into your git repo)
 
-Then run `bin/expand_templates.sh` and it will expand out all the files from the `templates` directory that end with `.template` into equivalent files in the current director, replacing envars as they go, and putting in a 'special value' for the SSH keyfile (ugh - I hate special cases!), 
+Then run `bin/expand_templates.sh` and it will expand out all the files from the `templates` directory that end with `.template` into equivalent files in the current directory, replacing envars as they go, and putting in a 'special value' for the SSH keyfile (ugh - I hate special cases!), 
 
 Then use the `aws.conf` file created to make your CDSW installation
 
