@@ -97,7 +97,7 @@ cloudera-manager {
 yum -y install centos-release-scl wget
 cd /tmp
  
-wget 'http://archive.cloudera.com/spark2/csd/SPARK2_ON_YARN-2.0.0.cloudera1.jar'
+wget 'http://archive.cloudera.com/spark2/csd/SPARK2_ON_YARN-2.1.0.cloudera1.jar'
  
 mkdir -p /opt/cloudera/csd
 chmod 644 SPARK*.jar
@@ -208,7 +208,7 @@ cluster {
 
       instance: ${instances.cdsw} {
       	bootstrapScript: """#!/bin/bash -x
-curl -u cloudera:AskBiggerQuestions -O http://bits.cloudera.com/179e45eb/0.7.3/cloudera-data-science-workbench-0.7.3-1.el7.centos.x86_64.rpm
+curl -u cloudera:AskBiggerQuestions -O http://bits.cloudera.com/179e45eb/0.8.0/cloudera-data-science-workbench-0.8.0-1.el7.centos.x86_64.rpm
 yum -y localinstall cloudera-data-science-workbench-*.rpm
 exit 0
 """
@@ -246,7 +246,7 @@ mount
 fdisk -l | grep /dev/xvd
 DBD="$(grep '^/dev' /etc/fstab | cut -f1 -d' ' | sort | sed 'N;s/\n/ /' | head -1)"
 ABD="$(grep '^/dev' /etc/fstab | cut -f1 -d' ' | sort | sed 'N;s/\n/ /' | tail -1)"
-sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" -e "s/\(MASTER_HOSTNAME=\).*/\1${MASTER:?}/"  -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" -e "s@\(APPLICATION_BLOCK_DEVICES=\).*@\1\"${ABD:?}\"@" /etc/cdsw/config/cdsw.conf
+sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" -e "s/\(MASTER_IP=\).*/\1${MASTER:?}/"  -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" -e "s@\(APPLICATION_BLOCK_DEVICES=\).*@\1\"${ABD:?}\"@" /etc/cdsw/config/cdsw.conf
 for dev in $(grep '^/dev' /etc/fstab | cut -f1 -d' '); do umount $dev; done
 sed -i '/^\/dev/d' /etc/fstab
 
