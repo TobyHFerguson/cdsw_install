@@ -74,11 +74,6 @@ instances {
 	ebsVolumeCount : 4
 	ebsVolumeType: gp2
 	ebsVolumeSizeGiB: 500
-	bootstrapScript: """#!/bin/bash -x
-curl -u cloudera:AskBiggerQuestions -O http://bits.cloudera.com/179e45eb/0.7.3/cloudera-data-science-workbench-0.7.3-1.el7.centos.x86_64.rpm
-yum -y localinstall cloudera-data-science-workbench-*.rpm
-exit 0
-"""
    }
 
 }
@@ -211,7 +206,13 @@ cluster {
     gateways {
       count: 1
 
-      instance: ${instances.cdsw}
+      instance: ${instances.cdsw} {
+      	bootstrapScript: """#!/bin/bash -x
+curl -u cloudera:AskBiggerQuestions -O http://bits.cloudera.com/179e45eb/0.7.3/cloudera-data-science-workbench-0.7.3-1.el7.centos.x86_64.rpm
+yum -y localinstall cloudera-data-science-workbench-*.rpm
+exit 0
+"""
+}
 
       roles {
         HDFS: [GATEWAY]
