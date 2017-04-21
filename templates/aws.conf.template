@@ -257,6 +257,10 @@ echo "net.bridge.bridge-nf-call-iptables=1" >>/etc/sysctl.d/bridge.conf
 # Ensure that the ipv6 networking is NOT disabled - this can be done at boot time:
 echo "net.ipv6.conf.all.disable_ipv6=0" >>/etc/sysctl.conf
 
+## Make sure that we add an auto restart script to the boot sequence
+echo "cdsw restart" >> /etc/rc.d/rc.local
+chmod a+x /etc/rc.d/rc.local
+
 fi
 exit 0
 """]
