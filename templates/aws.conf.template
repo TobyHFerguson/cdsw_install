@@ -89,6 +89,7 @@ exit 0
 # or bootstrap everything from scratch for a new cluster
 #
 
+include "kerberos.conf"
 cloudera-manager {
 
     instance: ${instances.master} {
@@ -110,8 +111,8 @@ chown cloudera-scm:cloudera-scm -R /opt/cloudera
 exit 0
 """
 	}
-    krbAdminUsername: REPLACE_ME_KRB_ADMIN_USERNAME
-    krbAdminPassword: REPLACE_ME_KRB_ADMIN_PASSWORD
+    krbAdminUsername: ${?krbAdminUsername}
+    krbAdminPassword: ${?krbAdminPassword}
 
    configs {
         # CLOUDERA_MANAGER corresponds to the Cloudera Manager Server configuration options
@@ -121,13 +122,13 @@ exit 0
             custom_banner_html: "Managed by Cloudera Director"
             MANAGES_PARCELS: true
 	    enable_faster_bootstrap: true
-            KDC_TYPE: REPLACE_ME_KDC_TYPE
-	    KDC_HOST: REPLACE_ME_KDC_HOST
-            SECURITY_REALM: REPLACE_ME_KDC_SECURITY_REALM
-            KRB_MANAGE_KRB5_CONF: true
+            KDC_TYPE: ${?KDC_TYPE}
+	    KDC_HOST: ${?KDC_HOST}
+            SECURITY_REALM: ${?SECURITY_REALM}
+            KRB_MANAGE_KRB5_CONF: ${?KRB_MANAGE_KRB5_CONF}
 	    # Note use of aes256 - need to ensure ALL cluster members have the necessary JCE policy files.
 	    # If you find that you can get a ticket but not use it then this is likely the problem!
-            KRB_ENC_TYPES: REPLACE_ME_KDC_ENC_TYPES
+            KRB_ENC_TYPES: ${?KRB_ENC_TYPES}
    	}
     }
 
