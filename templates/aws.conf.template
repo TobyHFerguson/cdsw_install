@@ -84,7 +84,7 @@ instances {
 # or bootstrap everything from scratch for a new cluster
 #
 
-include "kerberos.conf"
+include file("kerberos.conf")
 cloudera-manager {
 
     instance: ${instances.master} {
