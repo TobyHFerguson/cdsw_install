@@ -288,7 +288,7 @@ from cm_api.api_client import ApiResource
 
 def main():
     anaconda_repo='https://repo.continuum.io/pkgs/misc/parcels/'
-    anaconda_version='4.0.0'
+    anaconda_version='4.1.1'
     cmhost = os.environ['DEPLOYMENT_HOST_PORT'].split(":")[0]
     api = ApiResource(cmhost, username='admin', password='admin')
     all_clusters = api.get_all_clusters()
