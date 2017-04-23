@@ -48,7 +48,12 @@ ssh {
 }
 
 common-instance-properties {
-    image: "REPLACE_ME_AMI_ID" # An AWS AMI, such as ami-40c71256 - best to build this as per https://github.com/cloudera/director-scripts/tree/master/faster-bootstrap
+    image: "REPLACE_ME_AMI_ID" # An AWS AMI, such as ami-40c71256
+    # (us-east - CDH 5.10; ami-a5841db3 - us-east - CDH 5.11)
+    # - best to build this as per https://github.com/cloudera/director-scripts/tree/master/faster-bootstrap
+    # If this image includes CDH parcels then this image must be
+    # consistent with the CDH parcel versions (e.g. don't use an AMI
+    # that has the CDH 5.10 parcels if you select CDH 5.11 below!)
     tags {
         owner: "REPLACE_ME_OWNER"
     }
