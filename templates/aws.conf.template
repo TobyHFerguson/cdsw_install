@@ -136,7 +136,7 @@ exit 0
     #
     enableEnterpriseTrial: true
 
-    repository: "http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.10/"
+    repository: "http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.11/"
     repositoryKeyUrl: "http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/RPM-GPG-KEY-cloudera"
 
 }
@@ -148,7 +148,7 @@ exit 0
 cluster {
 
     products {
-      CDH: 5.10 # includes Hive and Spark
+      CDH: 5.11 # includes Hive and Spark
       SPARK2: 2
     }
 
@@ -182,7 +182,7 @@ cluster {
       }
     }
 
-    parcelRepositories: ["http://archive.cloudera.com/cdh5/parcels/5.10/", "https://archive.cloudera.com/spark2/parcels/2/"]
+    parcelRepositories: ["http://archive.cloudera.com/cdh5/parcels/5.11/", "https://archive.cloudera.com/spark2/parcels/2/"]
 
     services: [HDFS, YARN, SPARK2_ON_YARN, ]
 
