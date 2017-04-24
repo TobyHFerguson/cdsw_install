@@ -195,6 +195,13 @@ cluster {
         YARN: [RESOURCEMANAGER, JOBHISTORY]
  	SPARK2_ON_YARN: [SPARK2_YARN_HISTORY_SERVER]
       }
+      configs {
+      	     YARN {
+	     	  RESOURCEMANAGER {
+		  yarn.scheduler.maximum-allocation-mb: 2048
+		  }
+             }		  
+     }	  
     }
 
     workers {
@@ -206,6 +213,13 @@ cluster {
         HDFS: [DATANODE]
         YARN: [NODEMANAGER]
       }
+      configs {
+      	      YARN {
+	      	   NODEMANAGER {
+		   	       yarn.nodemanager.resource.memory-mb: 2048
+	          }
+	     }
+     }
     }
     gateways {
       count: 1
