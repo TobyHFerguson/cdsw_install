@@ -185,7 +185,7 @@ cluster {
 
     parcelRepositories: ["http://archive.cloudera.com/cdh5/parcels/5.11/", "https://archive.cloudera.com/spark2/parcels/2/"]
 
-    services: [HDFS, YARN, SPARK2_ON_YARN, HIVE, OOZIE, IMPALA, HUE]
+    services: [HDFS, YARN, SPARK2_ON_YARN, HIVE, OOZIE, IMPALA]
 
     masters {
       count: 1
@@ -198,20 +198,11 @@ cluster {
         HIVE: [HIVESERVER2, HIVEMETASTORE]
         OOZIE: [OOZIE_SERVER]
 	IMPALA: [CATALOGSERVER, STATESTORE]
-	HUE: [HUE_SERVER]
-      }
-      configs {
-          HUE {
-	      HUE_SERVER {
-	          hue_server_hue_safety_valve: """[desktop]
-		  allowed_hosts=*"""
-	      }
-	  }
       }
     }
 
     workers {
-      count: 2
+      count: 3
 
       instance: ${instances.worker}
 
