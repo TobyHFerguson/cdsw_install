@@ -13,7 +13,7 @@
 #
 # Cluster name
 #
-name: CDSW
+name: CDSW-merge
 
 #
 # Cloud provider configuration (credentials, region or zone and optional default image)
@@ -75,8 +75,9 @@ instances {
 	ebsVolumeType: gp2
 	ebsVolumeSizeGiB: 500
 	bootstrapScript: """#!/bin/bash -x
-curl -u cloudera:AskBiggerQuestions -O http://bits.cloudera.com/179e45eb/0.7.3/cloudera-data-science-workbench-0.7.3-1.el7.centos.x86_64.rpm
-yum -y localinstall cloudera-data-science-workbench-*.rpm
+curl -O https://archive.cloudera.com/cdsw/1/redhat/7/x86_64/cdsw/cloudera-cdsw.repo /etc/yum.repos.d
+sudo rpm --import https://archive.cloudera.com/cdsw/1/redhat/7/x86_64/cdsw/RPM-GPG-KEY-cloudera
+yum -y install cloudera-data-science-workbench
 exit 0
 """
    }
