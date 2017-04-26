@@ -58,6 +58,15 @@ common-instance-properties {
         owner: "REPLACE_ME_OWNER"
     }
     bootstrapScript: """
+if [ $(uname -r | grep -q el7) ]
+then
+	systemctl enable chronyd
+	systemctl start chronyd
+else
+	service ntpd start
+	chkconfig enable ntpd
+fi
+
 [ -z """${?KDC_HOST_IP}""" ] || {
 # Not needed - using KDC_HOST_IP in the krb5.conf file directly
 #echo """${?KDC_HOST_IP}""" hadoop-ad.hadoopsecurity.local >>/etc/hosts
