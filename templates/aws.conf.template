@@ -204,6 +204,7 @@ cluster {
         OOZIE: [OOZIE_SERVER]
 	IMPALA: [CATALOGSERVER, STATESTORE]
       }
+      configs {YARN {RESOURCEMANAGER { "yarn.scheduler.maximum-allocation-mb": 2048 }	  }}
     }
 
     workers {
@@ -216,6 +217,7 @@ cluster {
 	IMPALA: [IMPALAD]
         YARN: [NODEMANAGER]
       }
+      configs {YARN { NODEMANAGER { "yarn.nodemanager.resource.memory-mb": 2048 } }}
     }
     gateways {
       count: 1
