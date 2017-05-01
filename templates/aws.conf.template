@@ -141,6 +141,7 @@ exit 0
             MANAGES_PARCELS: true
 	    enable_faster_bootstrap: true
             KDC_TYPE: ${?KDC_TYPE}
+	    AD_KDC_DOMAIN: ${?AD_KDC_DOMAIN}
 	    KDC_HOST: ${?KDC_HOST_IP} # Using IP because of DSE-1796
             SECURITY_REALM: ${?SECURITY_REALM}
             KRB_MANAGE_KRB5_CONF: ${?KRB_MANAGE_KRB5_CONF}
