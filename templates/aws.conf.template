@@ -258,7 +258,7 @@ exit 0
       configs {
             SPARK2_ON_YARN {
                 GATEWAY {
-                    "spark2-conf/spark-env.sh_client_config_safety_valve": """if [ -z \"${PYSPARK_PYTHON}\" ]; then\n  export PYSPARK_PYTHON=/opt/cloudera/parcels/Anaconda/bin/python spark-submit pyspark_script.py\nfi"""
+                    "spark2-conf/spark-env.sh_client_config_safety_valve": """if [ -z ${PYSPARK_PYTHON} ]; then\n  export PYSPARK_PYTHON=/opt/cloudera/parcels/Anaconda/bin/python spark-submit pyspark_script.py\nfi"""
                 }
             }
         }
