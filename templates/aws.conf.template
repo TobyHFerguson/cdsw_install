@@ -49,7 +49,7 @@ ssh {
 
 common-instance-properties {
     image: "REPLACE_ME_AMI_ID" # An AWS AMI, such as ami-40c71256
-    # (us-east - CDH 5.10; ami-a5841db3 - us-east - CDH 5.11)
+    # (us-east - CDH 5.10; ami-5a25be4c - CDH 5.11 with JCE)
     # - best to build this as per https://github.com/cloudera/director-scripts/tree/master/faster-bootstrap
     # If this image includes CDH parcels then this image must be
     # consistent with the CDH parcel versions (e.g. don't use an AMI
@@ -57,6 +57,22 @@ common-instance-properties {
     tags {
         owner: "REPLACE_ME_OWNER"
     }
+    bootstrapScript: """
+if [ $(uname -r | grep -q el7) ]
+then
+	systemctl enable chronyd
+	systemctl start chronyd
+else
+	service ntpd start
+	chkconfig enable ntpd
+fi
+
+[ -z """${?KDC_HOST_IP}""" ] || {
+# Not needed - using KDC_HOST_IP in the krb5.conf file directly
+#echo """${?KDC_HOST_IP}""" hadoop-ad.hadoopsecurity.local >>/etc/hosts
+yum -y install krb5-workstation
+}
+"""
 }
 #
 # A list of instance types to use for group of nodes or management services
@@ -98,7 +114,7 @@ cloudera-manager {
             application: "Cloudera Manager 5"
         }
     
-   bootstrapScript: """#!/bin/bash -x
+   bootstrapScript: ${instances.master.bootstrapScript} """
 yum -y install centos-release-scl wget
 cd /tmp
  
@@ -108,6 +124,8 @@ mkdir -p /opt/cloudera/csd
 chmod 644 SPARK*.jar
 mv SPARK*.jar /opt/cloudera/csd/
 chown cloudera-scm:cloudera-scm -R /opt/cloudera
+
+[ -z """${?KDC_HOST_IP}""" ] || { yum -y install openldap-clients; }
 exit 0
 """
 	}
@@ -123,7 +141,7 @@ exit 0
             MANAGES_PARCELS: true
 	    enable_faster_bootstrap: true
             KDC_TYPE: ${?KDC_TYPE}
-	    KDC_HOST: ${?KDC_HOST}
+	    KDC_HOST: ${?KDC_HOST_IP} # Using IP because of DSE-1796
             SECURITY_REALM: ${?SECURITY_REALM}
             KRB_MANAGE_KRB5_CONF: ${?KRB_MANAGE_KRB5_CONF}
 	    # Note use of aes256 - need to ensure ALL cluster members have the necessary JCE policy files.
@@ -223,7 +241,7 @@ cluster {
       count: 1
 
       instance: ${instances.cdsw} {
-      	bootstrapScript: """#!/bin/bash -x
+      	bootstrapScript: ${instances.cdsw.bootstrapScript} """
 cd /etc/yum.repos.d
 curl -O https://archive.cloudera.com/cdsw/1/redhat/7/x86_64/cdsw/cloudera-cdsw.repo
 sudo rpm --import https://archive.cloudera.com/cdsw/1/redhat/7/x86_64/cdsw/RPM-GPG-KEY-cloudera
