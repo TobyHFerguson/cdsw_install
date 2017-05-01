@@ -271,17 +271,10 @@ then
 alternatives --install /usr/bin/java java /usr/java/jdk1.7.0_67-cloudera/bin/java 2000
 
 echo "This is the CDSW node"
-# install AWS
-yum -y install unzip git
-curl -O "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip"
-unzip awscli-bundle.zip
-./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws && rm -rf awscli-bundle*
+# install git
+yum -y install git
 
-export AWS_ACCESS_KEY_ID='REPLACE_ME_AWS_ACCESS_KEY_ID'
-export AWS_SECRET_ACCESS_KEY='REPLACE_ME_AWS_SECRET_ACCESS_KEY'
-export AWS_DEFAULT_REGION=us-east-1
-
-PUB_IP=$(/usr/local/bin/aws ec2 describe-instances  --output text --filter Name=private-dns-name,Values=$(hostname -f) | grep ^INSTANCES | cut -f15)
+PUB_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
 DOM="ec2.${PUB_IP:?}.xip.io"
 MASTER=$(hostname -f)
 # Because we only added two disks to the instance then they'll be the
