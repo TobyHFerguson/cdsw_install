@@ -3,15 +3,15 @@ Automated installed of CDSW with Director 2.4
 
 This repo contains Director 2.4 configuration files that can be used to install a cluster to demonstrate CDSW.
 
-The main configuration file is `cdsw.conf`. This file itself refers to other files:
-* `aws.conf` - a file containing the provider configuration for Amazon Web Services
+The main configuration file is `aws.conf`. This file itself refers to other files:
+* `aws_provider.conf` - a file containing the provider configuration for Amazon Web Services
 * `ssh.conf` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
 * `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication.
 
 To use this set of files you need to edit them, and then put them all into the same directory then execute something like:
 ```sh
 export AWS_SECRET_KEY=aldsfkja;sldfkj;adkf;adjkf
-cloudera-director bootstrap-remote cdsw.conf --lp.remote.username=director --lp.remote.password=cloudera
+cloudera-director bootstrap-remote aws.conf --lp.remote.username=admin --lp.remote.password=admin
 ```
 Note the use of the AWS_SECRET_KEY envariable. If you fail to set that up then you'll get a validation error.
 
