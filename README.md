@@ -30,6 +30,12 @@ Only tested in AWS us-east-1 using the exact network etc. etc. as per the file.
 
 Relies on an [xip.io](http://xip.io) trick to make it work.
 
+You'll need to set two YARN config variables by hand (I used a value of 2048 MB and that worked)
++ `yarn.nodemanager.resource.memory-mb`
++ `yarn.scheduler.maximum-allocation-mb`
++ 
+If you don't do this then you'll see errors when you run a Spark job from CDSW.
+
 ## XIP.io tricks
 (XIP.io)[http://xip.io] is a public bind server that uses the FQDN given to return an address. A simple explanation is if you have your kdc at IP address `10.3.4.6`, say, then you can refer to it as `kdc.10.3.4.6.xip.io` and this name will be resolved to `10.3.4.6` (indeed, `foo.10.3.4.6.xip.io` will likewise resolve to the same actual IP address).
 
