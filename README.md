@@ -1,30 +1,31 @@
 # cdsw_install
-Automated installed of CDSW with Director 2.3
+Automated installed of CDSW with Director 2.4
 
-This repo contains Director 2.3 configuration files that can be used to install a cluster to demonstrate CDSW.
+This repo contains Director 2.4 configuration files that can be used to install a cluster to demonstrate CDSW.
 
-The main configuration file is `cdsw.conf`. This file itself refers to another file:
+The main configuration file is `cdsw.conf`. This file itself refers to other files:
 * `aws.conf` - a file containing the provider configuration for Amazon Web Services
 * `ssh.conf` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
+* `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication.
 
-You will need to put in the appropriate values into `aws.conf` and `ssh.conf` before before you use these two files.
-
-To use this set of files you need to put them all into the same directory then execute something like:
+To use this set of files you need to edit them, and then put them all into the same directory then execute something like:
 ```sh
 export AWS_SECRET_KEY=aldsfkja;sldfkj;adkf;adjkf
 cloudera-director bootstrap-remote cdsw.conf --lp.remote.username=director --lp.remote.password=cloudera
 ```
 Note the use of the AWS_SECRET_KEY envariable. If you fail to set that up then you'll get a validation error.
 
-## Details
-### Testing
-The testing directory contains a simple set of test files that will replace the string `REPLACE_ME_XXXX` with `REPLACE_ME_XXXX_TEST`
+The CDSW instance you will get will be named after the public ip address of the cdsw instance. The name will be `ec2.PUBLIC_IP.xip.io`. See below for details.
+
+You will need to fix up two Yarn parameters using CM before the system is ready to run any Spark jobs:
+
++ `yarn.scheduler.maximum-allocation-mb`
++ `yarn.nodemanager.resource.memory-mb`
+
+(I set them both to 2GiB and that seems to work OK.)
+
 
 ## Limitations
-Requires a kerberized cluster (not certain this is needed anymore, but `aws.conf.template` currently has kerberos in it.
-
-Uses a fixed AMI that has AES256 JCE in it.
-
 Only tested in AWS us-east-1 using the exact network etc. etc. as per the file.
 
 Relies on an [xip.io](http://xip.io) trick to make it work.
