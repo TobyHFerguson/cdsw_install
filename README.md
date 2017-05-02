@@ -1,45 +1,29 @@
 # cdsw_install
-Automated installed of CDSW with Director 2.3
+Automated installed of CDSW with Director 2.4
 
-This repo will create a Cloudera Director conf file (`aws.conf`) in the current directory that can be used to construct a
-CDSW cluster.
+This repo contains Director 2.4 configuration files that can be used to install a cluster to demonstrate CDSW.
 
-It uses templating (as opposed to HOCON substitution variables) because of the need to replace variables in the base `aws.conf`
-file in multi-line strings (something that the HOCON format can't do).
+The main configuration file is `aws.conf`. This file itself refers to other files:
+* `aws_provider.conf` - a file containing the provider configuration for Amazon Web Services
+* `ssh.conf` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
+* `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication.
 
-## Details
-### Overview
-This repo contains scripts (in `bin`) and templates (in `templates`) which will create expanded files using the variables defined in `envars` and `secrets`.
-
-In particular it will create `aws.conf` and the values in `kerberos.conf`
-
-
-### Instructions
-Modify the envars file with the relevant values (I'm assuming you're familiar with Director and AWS!)
-
-Note that the `SSH_KEYFILE` argument is assumed to be the full path to a private key file.
-
-Construct a file `secrets` with a line like this in it, replacing `KEY_YOU_WANT_TO_KEEP_SECRET` with your `AWS_SECRET_ACCESS_KEY` value:
-```
-AWS_SECRET_ACCESS_KEY=KEY_YOU_WANT_TO_KEEP SECRET
-```
-
-(this file is ignored by git, so helps prevent you checking in secrets into your git repo)
-
-Then run `bin/expand_templates.sh` and it will expand out all the files from the `templates` directory that end with `.template` into equivalent files in the current directory, replacing envars as they go, and putting in a 'special value' for the SSH keyfile (ugh - I hate special cases!), 
-
-Then use the `aws.conf` AND the `kerberos.conf` files thus: (Note, it is OK to omit the `kerberos.conf` file - you'll simply have an unkerberized cluster):
-
+To use this set of files you need to edit them, and then put them all into the same directory then execute something like:
 ```sh
+export AWS_SECRET_KEY=aldsfkja;sldfkj;adkf;adjkf
 cloudera-director bootstrap-remote aws.conf --lp.remote.username=admin --lp.remote.password=admin
 ```
-Note: the `kerberos.conf` file, if you have one, must be in the same directory as the `aws.conf` file.
+Note the use of the AWS_SECRET_KEY envariable. If you fail to set that up then you'll get a validation error.
 
-### Git
-The `secrets` file is ignored by Git, so you can put your AWS_SECRET_KEY in there and not get caught out by inadvertently committing your secrets into a public git repository (which will cause Amazon to send you a bunch of emails and invalidate that key!)
+The CDSW instance you will get will be named after the public ip address of the cdsw instance. The name will be `ec2.PUBLIC_IP.xip.io`. See below for details.
 
-### Testing
-The testing directory contains a simple set of test files that will replace the string `REPLACE_ME_XXXX` with `REPLACE_ME_XXXX_TEST`
+You will need to fix up two Yarn parameters using CM before the system is ready to run any Spark jobs:
+
++ `yarn.scheduler.maximum-allocation-mb`
++ `yarn.nodemanager.resource.memory-mb`
+
+(I set them both to 2GiB and that seems to work OK.)
+
 
 ## Limitations
 Only tested in AWS us-east-1 using the exact network etc. etc. as per the file.
