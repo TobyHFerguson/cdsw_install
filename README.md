@@ -6,7 +6,7 @@ This repo contains Director 2.4 configuration files that can be used to install 
 The main configuration file is `aws.conf`. This file itself refers to other files:
 * `aws_provider.conf` - a file containing the provider configuration for Amazon Web Services
 * `ssh.conf` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
-* `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication.
+* `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication. (See below for details on how to easily setup an AD instance and use it)
 
 To use this set of files you need to edit them, and then put them all into the same directory then execute something like:
 ```sh
@@ -44,3 +44,34 @@ This technique is used in two places:
 + When the cluster is built you will access the CDSW at the public IP address of the CDSW instance. Lets assume that that address is `C.D.S.W` (appropriate, some might say) - then the URL to access that instance would be http://ec2.C.D.S.W.xip.io
 
 This is great for hacking around with ephemeral devices such as VMs and Cloud images!
+
+## Kerberos Tricks
+I use a public ActiveDirectory ami setup by Jeff Bean: `ami-a3daa0c6` to create an AD instance. 
+
+The username/password to the image are `Administrator/Passw0rd!`
+
+Allow at least 5, maybe 10 minutes for the image to spin up and work properly. 
+
+The kerberos settings (which you'd put into `kerberos.conf`) are:
+
+```
+krbAdminUsername: "cm@HADOOPSECURITY.LOCAL"
+krbAdminPassword: "Passw0rd!
+KDC_TYPE: "Active Directory"
+KDC_HOST: "hadoop-ad.hadoopsecurity.local"
+KDC_HOST_IP: # WHATEVER THE INTERNAL IP ADDRESS IS FOR THIS INSTANCE
+SECURITY_REALM: "HADOOPSECURITY.LOCAL"
+AD_KDC_DOMAIN: "OU=hadoop,DC=hadoopsecurity,DC=local"
+KRB_MANAGE_KRB5_CONF: true
+KRB_ENC_TYPES: "aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5"
+```
+(Don't forget to drop the aes256 encryption if your images don't have the Java Crypto Extensions installed)
+
+## Standard users and groups
+I use the following to create standard users and groups:
+```sh
+sudo groupadd supergroup
+sudo useradd -G supergroup -u 12354 hdfs_super
+sudo useradd -G supergroup -u 12345 cdsw
+echo Cloudera1 | sudo passwd --stdin cdsw
+```
