@@ -6,7 +6,7 @@ This repo contains Director 2.4 configuration files that can be used to install 
 The main configuration file is `aws.conf`. This file itself refers to other files:
 * `aws_provider.conf` - a file containing the provider configuration for Amazon Web Services
 * `ssh.conf` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
-* `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication. (See below for details on how to easily setup an AD instance and use it)
+* `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an AD instance and use it)
 
 To use this set of files you need to edit them, and then put them all into the same directory then execute something like:
 ```sh
