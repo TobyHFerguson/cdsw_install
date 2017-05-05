@@ -68,10 +68,15 @@ KRB_ENC_TYPES: "aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5
 (Don't forget to drop the aes256 encryption if your images don't have the Java Crypto Extensions installed)
 
 ## Standard users and groups
-I use the following to create standard users and groups:
+I use the following to create standard users and groups, running this on each machine in the cluster:
 ```sh
 sudo groupadd supergroup
 sudo useradd -G supergroup -u 12354 hdfs_super
 sudo useradd -G supergroup -u 12345 cdsw
 echo Cloudera1 | sudo passwd --stdin cdsw
+```
+And then adding the corresponding hdfs directory from a single cluster machine:
+```sh
+kinit cdsw
+hdfs dfs -mkdir /user/cdsw
 ```
