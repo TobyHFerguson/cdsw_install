@@ -22,8 +22,15 @@ You will need to fix up two Yarn parameters using CM before the system is ready 
 + `yarn.scheduler.maximum-allocation-mb`
 + `yarn.nodemanager.resource.memory-mb`
 
-(I set them both to 2GiB and that seems to work OK.)
+(I set them both to 2GiB for the small system (worker c4.xlarge; cdsw: c4.4xlarge) and that seems to work OK.
 
+For the large system (worker: c4.8xlarge; cdsw: r4.16xlarge) I chose:
+
++ `yarn.scheduler.maximum-allocation-mb: 55174`
++ `yarn.nodemanager.resource.memory-mb: 20606`
++ `yarn.nodemanager.resource.cpu-vcores: 32`
+
+and that worked OK)
 
 ## Limitations
 Only tested in AWS us-east-1 using the exact network etc. etc. as per the file.
