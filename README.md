@@ -53,6 +53,94 @@ This technique is used in two places:
 This is great for hacking around with ephemeral devices such as VMs and Cloud images!
 
 ## Kerberos Tricks
+## MIT KDC
+I setup an MIT KDC in the Director image and then create a `kerberos.conf` to use that:
+```
+krbAdminUsername: "cm/admin@HADOOPSECURITY.LOCAL"
+krbAdminPassword: "Passw0rd!"
+
+# KDC_TYPE is either "Active Directory" or "MIT KDC"
+#KDC_TYPE: "Active Directory"
+KDC_TYPE: "MIT KDC"
+
+KDC_HOST: "hadoop-ad.hadoopsecurity.local"
+
+# Need to use KDC_HOST_IP if KDC_HOST is not in DNS. Cannot use /etc/hosts because CDSW doesn't read it
+# See DSE-1796 for details
+
+KDC_HOST_IP: "10.0.0.82"
+
+SECURITY_REALM: "HADOOPSECURITY.LOCAL"
+
+KRB_MANAGE_KRB5_CONF: true
+
+#KRB_ENC_TYPES: "aes128-cts-hmac-sha1-96 arcfour-hmac-md5"
+KRB_ENC_TYPES: "aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5"
+
+# Note use of aes256 - if you find you can get a ticket but not use it then this might be the problem
+# You'll need to either remove aes256 or include the jce libraries
+```
+### Server Config
+In `/var/kerberos/krb5kdc/kdc.conf`:
+```
+[kdcdefaults]
+ kdc_ports = 88
+ kdc_tcp_ports = 88
+
+[realms]
+ HADOOPSECURITY.LOCAL = {
+ acl_file = /var/kerberos/krb5kdc/kadm5.acl
+ dict_file = /usr/share/dict/words
+ admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
+ supported_enctypes = aes256-cts-hmac-sha1-96:normal aes128-cts-hmac-sha1-96:normal arcfour-hmac-md5:normal
+ max_renewable_life = 7d
+}
+```
+In `/var/kerberos/krb5kdc/kadm5.acl` I setup any principal with the `/admin` extension as having full rights:
+
+```
+*/admin@HADOOPSECURITY.LOCAL	*
+```
+
+I then execute the following to setup the users etc:
+```sh
+sudo kdb5_util create -P Passw0rd!
+sudo kadmin.local addprinc -pw Passw0rd! cm/admin
+sudo kadmin.local addprinc cdsw -pw Cloudera1
+
+systemctl start krb5kdc
+systemctl enable krb5kdc
+systemctl start kadmin
+systemctl enable kadmin
+```
+
+Note that the CM username and credentials are `cm/admin@HADOOPSECURITY.LOCAL` and `Passw0rd!` respectively.
+
+### Client Config (Managed by Cloudera Manager)
+In `/etc/krb5.conf` I have this:
+```
+[libdefaults]
+ default_realm = HADOOPSECURITY.LOCAL
+ dns_lookup_realm = false
+ dns_lookup_kdc = false
+ ticket_lifetime = 24h
+ renew_lifetime = 7d
+ forwardable = true
+ default_tgs_enctypes = aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5
+ default_tkt_enctypes = aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5
+ permitted_enctypes = aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5
+
+[realms]
+ HADOOPSECURITY.LOCAL = {
+  kdc = 10.0.0.82
+  admin_server = 10.0.0.82
+ }
+ ```
+ (Note that the IP address used is that of the private IP address of the director server; this is stable over reboot
+ so works well)
+ 
+## ActiveDirectory
+(Deprecated - I found this image to be unstable. It would just stop working after 3 days or so.)
 I use a public ActiveDirectory ami setup by Jeff Bean: `ami-a3daa0c6` to create an AD instance. 
 
 The username/password to the image are `Administrator/Passw0rd!`
