@@ -106,7 +106,7 @@ I then execute the following to setup the users etc:
 ```sh
 sudo kdb5_util create -P Passw0rd!
 sudo kadmin.local addprinc -pw Passw0rd! cm/admin
-sudo kadmin.local addprinc cdsw -pw Cloudera1
+sudo kadmin.local addprinc -pw Cloudera1 cdsw
 
 systemctl start krb5kdc
 systemctl enable krb5kdc
