@@ -1,60 +1,36 @@
 # cdsw_install
-Automated installed of CDSW with Director 2.4
+Automated install of Cloudera Data Science Workbench (CDSW) with Director 2.4
 
 This repo contains Director 2.4 configuration files that can be used to install a cluster to demonstrate CDSW.
 
-The main configuration file is `aws.conf`. This file itself refers to other files:
+You will need a working Cloudera Director installation. Instructions on installing Director can be found [here](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh).
+
+The main configuration file is `cdsw.conf`. This file itself refers to other files:
 * `aws_provider.conf` - a file containing the provider configuration for Amazon Web Services
 * `ssh.conf` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
 * `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an AD instance and use it)
 
-To use this set of files you need to edit them, and then put them all into the same directory then execute something like:
+AMI_ID for us-west-2: ami-71696108
+AMI_ID for us-east-1: ami-a5841db3
+
+To use this set of files you need to edit them, and then put them all into the same directory then execute the following commands:
 ```sh
 export AWS_SECRET_KEY=aldsfkja;sldfkj;adkf;adjkf
-cloudera-director bootstrap-remote aws.conf --lp.remote.username=admin --lp.remote.password=admin
+cloudera-director bootstrap-remote cdsw.conf --lp.remote.username=admin --lp.remote.password=admin
 ```
 Note the use of the AWS_SECRET_KEY envariable. If you fail to set that up then you'll get a validation error.
 
 The CDSW instance you will get will be named after the public ip address of the cdsw instance. The name will be `ec2.PUBLIC_IP.xip.io`. See below for details.
 
-You will need to fix up two Yarn parameters using CM before the system is ready to run any Spark jobs:
+## Pre-Installation Steps
+You will need to install a Kerberos KDC on your Cloudera Director node.
 
-+ `yarn.scheduler.maximum-allocation-mb`
-+ `yarn.nodemanager.resource.memory-mb`
+A script to automate the installation of MIT Kerberos can be found [here](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh).
 
-(I set them both to 2GiB for the small system (worker c4.xlarge; cdsw: c4.4xlarge) and that seems to work OK.
+### MIT KDC Setup
+If you intend to manually install the MIT KDC, perform the installation steps documented in the script above.
 
-For the large system (worker: c4.8xlarge; cdsw: r4.16xlarge) I chose:
-
-+ `yarn.scheduler.maximum-allocation-mb: 55174`
-+ `yarn.nodemanager.resource.memory-mb: 20606`
-+ `yarn.nodemanager.resource.cpu-vcores: 32`
-
-and that worked OK)
-
-## Limitations
-Only tested in AWS us-east-1 using the exact network etc. etc. as per the file.
-
-Relies on an [xip.io](http://xip.io) trick to make it work.
-
-You'll need to set two YARN config variables by hand (I used a value of 2048 MB and that worked)
-+ `yarn.nodemanager.resource.memory-mb`
-+ `yarn.scheduler.maximum-allocation-mb`
-+ 
-If you don't do this then you'll see errors when you run a Spark job from CDSW.
-
-## XIP.io tricks
-(XIP.io)[http://xip.io] is a public bind server that uses the FQDN given to return an address. A simple explanation is if you have your kdc at IP address `10.3.4.6`, say, then you can refer to it as `kdc.10.3.4.6.xip.io` and this name will be resolved to `10.3.4.6` (indeed, `foo.10.3.4.6.xip.io` will likewise resolve to the same actual IP address).
-
-This technique is used in two places:
-+ In the director conf file to specify the IP address of the KDC - instead of messing around with bind or `/etc/hosts` in a bootstrap script etc. simply set the KDC_HOST to `kdc.A.B.C.D.xip.io` (choosing appropriate values for A, B, C & D as per your setup)
-+ When the cluster is built you will access the CDSW at the public IP address of the CDSW instance. Lets assume that that address is `C.D.S.W` (appropriate, some might say) - then the URL to access that instance would be http://ec2.C.D.S.W.xip.io
-
-This is great for hacking around with ephemeral devices such as VMs and Cloud images!
-
-## Kerberos Tricks
-## MIT KDC
-I setup an MIT KDC in the Director image and then create a `kerberos.conf` to use that:
+Once the MIT KDC is installed and configured on the Director instance, edit `kerberos.conf` and set the IP address below to the private IP address of your Director instance:
 ```
 krbAdminUsername: "cm/admin@HADOOPSECURITY.LOCAL"
 krbAdminPassword: "Passw0rd!"
@@ -67,6 +43,8 @@ KDC_HOST: "hadoop-ad.hadoopsecurity.local"
 
 # Need to use KDC_HOST_IP if KDC_HOST is not in DNS. Cannot use /etc/hosts because CDSW doesn't read it
 # See DSE-1796 for details
+
+# The following IP should be set to your Director inatance IP
 
 KDC_HOST_IP: "10.0.0.82"
 
@@ -81,7 +59,7 @@ KRB_ENC_TYPES: "aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5
 # You'll need to either remove aes256 or include the jce libraries
 ```
 ### Server Config
-In `/var/kerberos/krb5kdc/kdc.conf`:
+In `/var/kerberos/krb5kdc/kdc.conf` on your Director instance:
 ```
 [kdcdefaults]
  kdc_ports = 88
@@ -106,7 +84,7 @@ I then execute the following to setup the users etc:
 ```sh
 sudo kdb5_util create -P Passw0rd!
 sudo kadmin.local addprinc -pw Passw0rd! cm/admin
-sudo kadmin.local addprinc cdsw -pw Cloudera1
+sudo kadmin.local addprinc -pw Cloudera1 cdsw
 
 systemctl start krb5kdc
 systemctl enable krb5kdc
@@ -117,7 +95,7 @@ systemctl enable kadmin
 Note that the CM username and credentials are `cm/admin@HADOOPSECURITY.LOCAL` and `Passw0rd!` respectively.
 
 ### Client Config (Managed by Cloudera Manager)
-In `/etc/krb5.conf` I have this:
+In `/etc/krb5.conf` on your Director instance:
 ```
 [libdefaults]
  default_realm = HADOOPSECURITY.LOCAL
@@ -138,14 +116,14 @@ In `/etc/krb5.conf` I have this:
  ```
  (Note that the IP address used is that of the private IP address of the director server; this is stable over reboot
  so works well)
- 
-## ActiveDirectory
+
+### ActiveDirectory
 (Deprecated - I found this image to be unstable. It would just stop working after 3 days or so.)
-I use a public ActiveDirectory ami setup by Jeff Bean: `ami-a3daa0c6` to create an AD instance. 
+I use a public ActiveDirectory ami setup by Jeff Bean: `ami-a3daa0c6` to create an AD instance.
 
 The username/password to the image are `Administrator/Passw0rd!`
 
-Allow at least 5, maybe 10 minutes for the image to spin up and work properly. 
+Allow at least 5, maybe 10 minutes for the image to spin up and work properly.
 
 The kerberos settings (which you'd put into `kerberos.conf`) are:
 
@@ -162,7 +140,23 @@ KRB_ENC_TYPES: "aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 arcfour-hmac-md5
 ```
 (Don't forget to drop the aes256 encryption if your images don't have the Java Crypto Extensions installed)
 
-## Standard users and groups
+
+## Post Installation Steps
+You will need to fix up two Yarn parameters using CM before the system is ready to run any Spark jobs:
+
++ `yarn.scheduler.maximum-allocation-mb`
++ `yarn.nodemanager.resource.memory-mb`
+
+(I set them both to 2GiB for the small system (worker c4.xlarge; cdsw: c4.4xlarge) and that seems to work OK.
+
+For the large system (worker: c4.8xlarge; cdsw: r4.16xlarge) I chose:
+
++ `yarn.scheduler.maximum-allocation-mb: 55174`
++ `yarn.nodemanager.resource.memory-mb: 20606`
++ `yarn.nodemanager.resource.cpu-vcores: 32`
+
+and that worked OK)
+### Create Standard users and groups
 I use the following to create standard users and groups, running this on each machine in the cluster:
 ```sh
 sudo groupadd supergroup
@@ -175,3 +169,24 @@ And then adding the corresponding hdfs directory from a single cluster machine:
 kinit cdsw
 hdfs dfs -mkdir /user/cdsw
 ```
+
+
+## Limitations
+Tested in both AWS us-east-1 and us-west-2.
+
+Relies on an [xip.io](http://xip.io) trick to make it work.
+
+You'll need to set two YARN config variables by hand (I used a value of 2048 MB and that worked)
++ `yarn.nodemanager.resource.memory-mb`
++ `yarn.scheduler.maximum-allocation-mb`
++
+If you don't do this then you'll see errors when you run a Spark job from CDSW.
+
+## XIP.io tricks
+(XIP.io)[http://xip.io] is a public bind server that uses the FQDN given to return an address. A simple explanation is if you have your kdc at IP address `10.3.4.6`, say, then you can refer to it as `kdc.10.3.4.6.xip.io` and this name will be resolved to `10.3.4.6` (indeed, `foo.10.3.4.6.xip.io` will likewise resolve to the same actual IP address).
+
+This technique is used in two places:
++ In the director conf file to specify the IP address of the KDC - instead of messing around with bind or `/etc/hosts` in a bootstrap script etc. simply set the KDC_HOST to `kdc.A.B.C.D.xip.io` (choosing appropriate values for A, B, C & D as per your setup)
++ When the cluster is built you will access the CDSW at the public IP address of the CDSW instance. Lets assume that that address is `C.D.S.W` (appropriate, some might say) - then the URL to access that instance would be http://ec2.C.D.S.W.xip.io
+
+This is great for hacking around with ephemeral devices such as VMs and Cloud images!
