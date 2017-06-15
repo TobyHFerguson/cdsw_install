@@ -35,7 +35,9 @@ com.typesafe.config.ConfigException$UnresolvedSubstitution: filetest.conf: 28: C
 
 The CDSW instance you will get will be named after the public ip address of the cdsw instance. The name will be `ec2.PUBLIC_IP.xip.io`. See below for details.
 
-You will have to figure out what this PUBLIC_IP is using your aws console. 
+You will have to figure out what this PUBLIC_IP is using your aws console.
+
+All nodes in the cluster will contain the user `cdsw`. That user's password is `Cloudera1`. (If you used my mit kdc installation scripts from below then you'll also find that this user's kerberos username and password are `cdsw` and `Cloudera1` also).
 
 You will need to fix up two Yarn parameters using CM before the system is ready to run any Spark jobs:
 
