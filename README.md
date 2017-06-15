@@ -7,7 +7,7 @@ There are two kinds of files:
 + Files you are expected to modify - these match the `*.properties` shell pattern.
 + Files that hold the system structure and which you should leave alone until you know what you're doing - these match the `*.conf` shell pattern
 
-The main configuration file is `aws.conf`. This file itself refers to other files written in (Java Properties format)[https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-]:
+The main configuration file is `aws.conf`. This file itself refers to other files written in [Java Properties format](https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-):
 
 * `aws_provider.properties` - a file containing the provider configuration for Amazon Web Services
 * `ssh.properties` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
@@ -72,7 +72,10 @@ This technique is used in two places:
 
 This is great for hacking around with ephemeral devices such as VMs and Cloud images!
 
+## Useful Scripts
+I use [install_director.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh) to install director, and [install_mit_kdc.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh) to install an mit kdc. (There's also [install_mit_client.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh) to create a client for testing purposes.).  
 ## Kerberos Tricks
+(Refer to the mit scripts linked above for details).
 ## MIT KDC
 I setup an MIT KDC in the Director image and then create a `kerberos.conf` to use that:
 ```
