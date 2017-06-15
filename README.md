@@ -3,19 +3,39 @@ Automated installed of CDSW with Director 2.4
 
 This repo contains Director 2.4 configuration files that can be used to install a cluster to demonstrate CDSW.
 
-The main configuration file is `aws.conf`. This file itself refers to other files:
-* `aws_provider.conf` - a file containing the provider configuration for Amazon Web Services
-* `ssh.conf` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
-* `kerberos.conf` - an optional file containing the details of an ActiveDirectory system to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an AD instance and use it)
+There are two kinds of files:
++ Files you are expected to modify - these match the `*.properties` shell pattern.
++ Files that hold the system structure and which you should leave alone until you know what you're doing - these match the `*.conf` shell pattern
 
-To use this set of files you need to edit them, and then put them all into the same directory then execute something like:
+The main configuration file is `aws.conf`. This file itself refers to other files written in (Java Properties format)[https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-]:
+
+* `aws_provider.properties` - a file containing the provider configuration for Amazon Web Services
+* `ssh.properties` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
+* `owner_tag.properties` - a file containing the mandatory value for the `owner` tag which is used to tag all VM instances. Within the Cloudera FCE account a VM without an owner tag will be deleted. It is customary (but not enforced) to use your Cloudera id for this tag value.
+* `kerberos.properties` - an *optional* file containing the details of Kerberos Key Distribution Center (KDC) to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an MIT KDC and use it). If this is provided then a secure cluster is set up. If `kerberos.properties` is not provided then an insecure cluster will be setup.
+
+To use this set of properties files you need to edit them, and then put them all into the same directory then execute something like:
 ```sh
-export AWS_SECRET_KEY=aldsfkja;sldfkj;adkf;adjkf
-cloudera-director bootstrap-remote aws.conf --lp.remote.username=admin --lp.remote.password=admin
+AWS_SECRET_KEY=aldsfkja;sldfkj;adkf;adjkf cloudera-director bootstrap-remote aws.conf --lp.remote.username=admin --lp.remote.password=admin
 ```
-Note the use of the AWS_SECRET_KEY envariable. If you fail to set that up then you'll get a validation error.
+replacing the value for the `AWS_SECRET_KEY` variable with the value specific to you and your `AWS_SECRET_KEY_ID` (which is defined in `aws_provider.properties`
+
+If you fail to set up  the `AWS_SECRET_KEY` then you'll find that cloudera-director silently fails, but grepping for AWS_SECRET_KEY in the local log file will reveal all:
+
+```sh
+[centos@ip-10-0-0-239 ~]$ unset AWS_ACCESS_KEY_ID #just to make sure its undefined!
+[centos@ip-10-0-0-239 ~]$ cloudera-director bootstrap-remote filetest.conf --lp.remote.username=admin --lp.remote.password=admin
+Process logs can be found at /home/centos/.cloudera-director/logs/application.log
+Plugins will be loaded from /var/lib/cloudera-director-plugins
+Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=256M; support was removed in 8.0
+Cloudera Director 2.4.0 initializing ...
+[centos@ip-10-0-0-239 ~]$ grep AWS_SECRET ~/.cloudera-director/logs/application.log
+com.typesafe.config.ConfigException$UnresolvedSubstitution: filetest.conf: 28: Could not resolve substitution to a value: ${AWS_SECRET_ACCESS_KEY}
+```
 
 The CDSW instance you will get will be named after the public ip address of the cdsw instance. The name will be `ec2.PUBLIC_IP.xip.io`. See below for details.
+
+You will have to figure out what this PUBLIC_IP is using your aws console. 
 
 You will need to fix up two Yarn parameters using CM before the system is ready to run any Spark jobs:
 
@@ -33,8 +53,6 @@ For the large system (worker: c4.8xlarge; cdsw: r4.16xlarge) I chose:
 and that worked OK)
 
 ## Limitations
-Only tested in AWS us-east-1 using the exact network etc. etc. as per the file.
-
 Relies on an [xip.io](http://xip.io) trick to make it work.
 
 You'll need to set two YARN config variables by hand (I used a value of 2048 MB and that worked)
