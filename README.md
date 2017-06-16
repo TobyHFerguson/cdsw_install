@@ -27,6 +27,11 @@ The main configuration file is `TOP.conf`. This file itself includes the files n
 * `CLOUD/owner_tag.properties` - a file containing the mandatory value for the `owner` tag which is used to tag all VM instances. Within the Cloudera FCE account a VM without an owner tag will be deleted. It is customary (but not enforced) to use your Cloudera id for this tag value.
 * `CLOUD/kerberos.properties` - an *optional* file containing the details of Kerberos Key Distribution Center (KDC) to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an MIT KDC and use it). If this is provided then a secure cluster is set up. If `kerberos.properties` is not provided then an insecure cluster will be setup.
 
+For GCP you will need to ensure that the plugin supports rhel7. Do this by adding the following line to `/var/lib/cloudera-director-plugins/google-provider-1.0.4/etc/google.conf` (copied from `google.conf.example` in the same directory):
+```
+     rhel7 = "https://www.googleapis.com/compute/v1/projects/rhel-cloud/global/images/rhel-7-v20170523"
+```
+
 ## SECRET files
 SECRET files are ignored by GIT and you must construct them yourself. We recommend setting their mode to 600, although that is not enforced anywhere.
 ## AWS
