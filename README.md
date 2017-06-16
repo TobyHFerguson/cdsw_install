@@ -1,25 +1,44 @@
 # cdsw_install
 Automated installed of CDSW with Director 2.4
 
-This repo contains Director 2.4 configuration files that can be used to install a cluster to demonstrate CDSW.
+This repo contains Director 2.4 configuration files that can be used to install a cluster to demonstrate CDSW on
+different cloud providers. We support AWS and GCP today.
 
-There are two kinds of files:
-+ Files you are expected to modify - these match the `*.properties` shell pattern.
-+ Files that hold the system structure and which you should leave alone until you know what you're doing - these match the `*.conf` shell pattern
+The basic idea is that you are working with a single instance of Director. You'll use the files contained here to create clusters in either AWS or GCP, by choosing the top level conf file (`aws.conf` or `gcp.conf`).
 
-The main configuration file is `aws.conf`. This file itself refers to other files written in [Java Properties format](https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-):
+## File Organization
+### File Kinds
+There are three kinds of files:
++ Property Files - You are expected to modify these. They match the `*.properties` shell pattern and use the (Java Properties format)[https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-]
++ Conf files - You are not expected to modify these. They match the `*.conf` shell pattern and use the (HOCON format)[https://github.com/typesafehub/config/blob/master/HOCON.md) format (a superset of JSON).
++ SECRET files - these have the prefix `SECRET` and are used to hold secrets for each provider. The exact format is provider specific.
 
-* `aws_provider.properties` - a file containing the provider configuration for Amazon Web Services
-* `ssh.properties` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
-* `owner_tag.properties` - a file containing the mandatory value for the `owner` tag which is used to tag all VM instances. Within the Cloudera FCE account a VM without an owner tag will be deleted. It is customary (but not enforced) to use your Cloudera id for this tag value.
-* `kerberos.properties` - an *optional* file containing the details of Kerberos Key Distribution Center (KDC) to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an MIT KDC and use it). If this is provided then a secure cluster is set up. If `kerberos.properties` is not provided then an insecure cluster will be setup.
+Basically the (sometimes complex) structured files are all in HOCON format, and have `.conf` suffix, whereas the easier ones to edit(because they only carry key value pairs) are the `.properties` files.
 
-To use this set of properties files you need to edit them, and then put them all into the same directory then execute something like:
-```sh
-AWS_SECRET_KEY=aldsfkja;sldfkj;adkf;adjkf cloudera-director bootstrap-remote aws.conf --lp.remote.username=admin --lp.remote.password=admin
+### Directory Structure
+The top level directory contains the main `conf` files (`aws.conf` & `gcp.conf`). We'll refer to them singly or together as `TOP.conf`, depending on context.
+
+The `aws` and `gcp` directories contain the files relevant to each cloud provider. We'll reference the general notion of a provider directory using the `CLOUD` nomenclature.
+
+The main configuration file is `TOP.conf`. This file itself includes the files needed for the specific cloud provider. We will only describe the properties files here:
+
+* `CLOUD/provider.properties` - a file containing the provider configuration for Amazon Web Services
+* `CLOUD/ssh.properties` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
+* `CLOUD/owner_tag.properties` - a file containing the mandatory value for the `owner` tag which is used to tag all VM instances. Within the Cloudera FCE account a VM without an owner tag will be deleted. It is customary (but not enforced) to use your Cloudera id for this tag value.
+* `CLOUD/kerberos.properties` - an *optional* file containing the details of Kerberos Key Distribution Center (KDC) to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an MIT KDC and use it). If this is provided then a secure cluster is set up. If `kerberos.properties` is not provided then an insecure cluster will be setup.
+
+For GCP you will need to ensure that the plugin supports rhel7. Do this by adding the following line to `/var/lib/cloudera-director-plugins/google-provider-1.0.4/etc/google.conf` (copied from `google.conf.example` in the same directory):
 ```
-replacing the value for the `AWS_SECRET_KEY` variable with the value specific to you and your `AWS_SECRET_KEY_ID` (which is defined in `aws_provider.properties`
+     rhel7 = "https://www.googleapis.com/compute/v1/projects/rhel-cloud/global/images/rhel-7-v20170523"
+```
 
+## SECRET files
+SECRET files are ignored by GIT and you must construct them yourself. We recommend setting their mode to 600, although that is not enforced anywhere.
+## AWS
+The secret file for AWS is called `SECRET.properties`. It is in Java Properties format and contains the AWS secret access key:
+```
+AWS_SECRET_ACCESS_KEY=
+```
 If you fail to set up  the `AWS_SECRET_KEY` then you'll find that cloudera-director silently fails, but grepping for AWS_SECRET_KEY in the local log file will reveal all:
 
 ```sh
@@ -32,10 +51,19 @@ Cloudera Director 2.4.0 initializing ...
 [centos@ip-10-0-0-239 ~]$ grep AWS_SECRET ~/.cloudera-director/logs/application.log
 com.typesafe.config.ConfigException$UnresolvedSubstitution: filetest.conf: 28: Could not resolve substitution to a value: ${AWS_SECRET_ACCESS_KEY}
 ```
+### GCP
+The secret file for GCP is called `SECRET.json`. It contains the full Google Secret Key, in JSON format, that you obtained when you made your google account.
 
-The CDSW instance you will get will be named after the public ip address of the cdsw instance. The name will be `ec2.PUBLIC_IP.xip.io`. See below for details.
-
-You will have to figure out what this PUBLIC_IP is using your aws console.
+# Workflow
++ Ensure that Director and the optional KDC is setup correctly
++ Choose the cloud provider you're going to work with and edit the properties and SECRET files appropriately.
++ Ensure that all the files (including the SSH key file) is available to director.
++ Execute a director bootstrap command
+```sh
+cloudera-director bootstrap-remote aws.conf --lp.remote.username=admin --lp.remote.password=admin
+```
++ Once completed, use your cloud provider's console to find the public IP (`CDSW_PIB`) address of the CDSW instance. Its name will begin with `cdsw`. 
++ You can reach the CDSW at `cdsw.CDSW_PIB.xip.io`. See below for details.
 
 All nodes in the cluster will contain the user `cdsw`. That user's password is `Cloudera1`. (If you used my mit kdc installation scripts from below then you'll also find that this user's kerberos username and password are `cdsw` and `Cloudera1` also).
 

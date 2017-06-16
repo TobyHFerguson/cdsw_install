@@ -1,3 +1,2 @@
-/secrets
+**/SECRET*
 tmp/*
-aws.conf
