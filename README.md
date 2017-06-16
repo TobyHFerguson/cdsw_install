@@ -100,7 +100,10 @@ This technique is used in two places:
 
 This is great for hacking around with ephemeral devices such as VMs and Cloud images!
 
+## Useful Scripts
+I use [install_director.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh) to install director, and [install_mit_kdc.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh) to install an mit kdc. (There's also [install_mit_client.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh) to create a client for testing purposes.).  
 ## Kerberos Tricks
+(Refer to the mit scripts linked above for details).
 ## MIT KDC
 I setup an MIT KDC in the Director image and then create a `kerberos.conf` to use that:
 ```
