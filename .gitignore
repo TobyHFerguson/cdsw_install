@@ -1,2 +1,5 @@
 **/SECRET*
 tmp/*
+*.pem
+*.tar
+*.org
