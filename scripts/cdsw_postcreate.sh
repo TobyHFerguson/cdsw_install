@@ -19,50 +19,54 @@ alternatives --install /usr/bin/java java /usr/java/jdk1.7.0_67-cloudera/bin/jav
 # install git
 yum -y install git
 
-function googlep() {
-	 curl --head --silent http://metadata.google.internal >/dev/null
-}
-
 function get_local_ip() {
-	 if googlep
-	 then
-		curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip
-	else
-		curl http://169.254.169.254/latest/meta-data/local-ipv4
-	fi
+    hostname -i
 }
 
 function get_public_ip() {
-	 if googlep
-	 then
-		curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip
-	else
-		curl http://169.254.169.254/latest/meta-data/public-ipv4
-	fi
+    azure='-H Metadata:true http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-04-02&format=text'
+    google='-H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip'
+    aws='http://169.254.169.254/latest/meta-data/public-ipv4'
+
+    for args in "$azure" "$google" "$aws"
+    do
+	# The sed script scans the curl output. If a 404 Not Found error is found then it quits.
+	# Otherwise it prints out the last line (the ip address)
+	public_ip=$(curl -i --silent $args | sed -n -e '/^HTTP.*404.*Not.*Found/q' -e '$p')
+
+	[ -n "$public_ip" ] && { break; }
+    done
+    echo ${public_ip?:"no public ip found for this vm"}
 }
 
+function get_disk_name() {
+    lsblk -f | grep $1 | cut -f1 -d' '
+}
 DOM="cdsw.$(get_public_ip).xip.io"
 MASTER=$(get_local_ip)
-# Because we only added two disks to the instance then they'll be the
-# first and last devices in /etc/fstab. Cut them out and use them for
-# the Docker Block Devices (DBD) and teh Abpplication Block Device (ABD)
-DBD="$(grep '^/dev' /etc/fstab | cut -f1 -d' ' | head -1)"
-ABD="$(grep '^/dev' /etc/fstab | cut -f1 -d' ' | tail -1)"
+# Because we only added two disks to the instance then they'll be the disks
+# mounted on /data0, /data1.
+DBD=/dev/$(get_disk_name data0)
+ABD=/dev/$(get_disk_name data1)
 sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" -e "s/\(MASTER_IP=\).*/\1${MASTER:?}/"  -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" -e "s@\(APPLICATION_BLOCK_DEVICE=\).*@\1\"${ABD:?}\"@" /etc/cdsw/config/cdsw.conf
-for dev in $(grep '^/dev' /etc/fstab | cut -f1 -d' '); do umount $dev; done
-sed -i '/^\/dev/d' /etc/fstab
 
-# Ensure that cdsw can restart after reboot
-# Cannot use sysctl directly since the bridge module isn't loaded until after sysctl
-# So load the module early and put the configuration so that sysctl can do its stuff
-echo bridge > /etc/modules-load.d/bridge.conf
-echo "net.bridge.bridge-nf-call-iptables=1" >>/etc/sysctl.d/bridge.conf
+sed -i '/\/data[01]/d' /etc/fstab
+umount /data0
+umount /data1
+
 # CDSW prereq
 # Ensure that the ipv6 networking is NOT disabled - this can be done at boot time:
 echo "net.ipv6.conf.all.disable_ipv6=0" >>/etc/sysctl.conf
+
+sysctl -p
+
+systemctl enable rpcbind
+systemctl restart rpcbind
+systemctl restart rpc-statd
+
 # Ensure that the hard and soft limits on number of files is set so that cdsw is happy
 # First, set the limits permanently:
-cat >/etc/security/limits.conf/90-nofile.conf <<EOF
+cat >/etc/security/limits.d/90-nofile.conf <<EOF
 * soft nofile 1048576
 * hard nofile 1048576
 EOF
@@ -70,10 +74,7 @@ EOF
 # Then, set them in the currently running system:
 ulimit -n 1048576
 
-if googlep
-then
-# Google only offers RHEL7.3, but CDSW checks for RHEL 7.2
-# We apply this patch to circumvent the check
+# Apply this patch to allow for RHEL/CentOS 7.3
 (cd /etc/cdsw/scripts
 patch <<\EOF
 --- -   2017-06-16 20:39:57.318975584 +0000
@@ -89,7 +90,6 @@ patch <<\EOF
  then
 EOF
 )
-fi
 
 # CDSW applies a too-strict check for selinux being disabled.
 # This requires that the cdsw node be rebooted, so instead we 
