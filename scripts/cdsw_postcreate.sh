@@ -14,7 +14,8 @@ then
 echo "This is the CDSW node"
 
 # Install java using alternatives:
-alternatives --install /usr/bin/java java /usr/java/jdk1.7.0_67-cloudera/bin/java 2000
+JH=/usr/java/jdk1.7.0_67-cloudera
+alternatives --install /usr/bin/java java ${JH:?}/bin/java 2000
 
 # install git
 yum -y install git
@@ -48,7 +49,7 @@ MASTER=$(get_local_ip)
 # mounted on /data0, /data1.
 DBD=/dev/$(get_disk_name data0)
 ABD=/dev/$(get_disk_name data1)
-sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" -e "s/\(MASTER_IP=\).*/\1${MASTER:?}/"  -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" -e "s@\(APPLICATION_BLOCK_DEVICE=\).*@\1\"${ABD:?}\"@" /etc/cdsw/config/cdsw.conf
+sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" -e "s/\(MASTER_IP=\).*/\1${MASTER:?}/"  -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" -e "s@\(APPLICATION_BLOCK_DEVICE=\).*@\1\"${ABD:?}\"@" -e "s@\(JAVA_HOME=\).*@\1${JH:?}@" /etc/cdsw/config/cdsw.conf
 
 sed -i '/\/data[01]/d' /etc/fstab
 umount /data0
