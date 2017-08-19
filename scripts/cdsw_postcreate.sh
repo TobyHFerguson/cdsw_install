@@ -13,9 +13,8 @@ if rpm -q cloudera-data-science-workbench
 then
 echo "This is the CDSW node"
 
-# Install java using alternatives:
-JH=/usr/java/jdk1.7.0_67-cloudera
-alternatives --install /usr/bin/java java ${JH:?}/bin/java 2000
+
+
 
 # install git
 yum -y install git
@@ -49,7 +48,15 @@ MASTER=$(get_local_ip)
 # mounted on /data0, /data1.
 DBD=/dev/$(get_disk_name data0)
 ABD=/dev/$(get_disk_name data1)
-sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" -e "s/\(MASTER_IP=\).*/\1${MASTER:?}/"  -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" -e "s@\(APPLICATION_BLOCK_DEVICE=\).*@\1\"${ABD:?}\"@" -e "s@\(JAVA_HOME=\).*@\1${JH:?}@" /etc/cdsw/config/cdsw.conf
+
+# Java default used - setup in java8-bootstrap-script.sh
+JH=/usr/java/default
+
+sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" /etc/cdsw/config/cdsw.conf
+sed -i -e "s/\(MASTER_IP=\).*/\1${MASTER:?}/"  /etc/cdsw/config/cdsw.conf
+sed -i -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" /etc/cdsw/config/cdsw.conf
+sed -i -e "s@\(APPLICATION_BLOCK_DEVICE=\).*@\1\"${ABD:?}\"@" /etc/cdsw/config/cdsw.conf
+sed -i -e "s@\(JAVA_HOME=\).*@\1${JH:?}@" /etc/cdsw/config/cdsw.conf
 
 sed -i '/\/data[01]/d' /etc/fstab
 umount /data0
@@ -75,23 +82,6 @@ EOF
 # Then, set them in the currently running system:
 ulimit -n 1048576
 
-# Apply this patch to allow for RHEL/CentOS 7.3
-(cd /etc/cdsw/scripts
-patch <<\EOF
---- -   2017-06-16 20:39:57.318975584 +0000
-+++ preinstall-validation.sh    2017-06-16 20:28:50.588007327 +0000
-@@ -15,7 +15,7 @@
- 
- echo -n "Prechecking OS Version${PAUSE}"
- min_version="7.2" #inclusive
--max_version="7.2.9999" #inclusive
-+max_version="7.3.9999"
- lsb_version=$(lsb_release -rs)
- if [ "$?" -ne "0" ]
- then
-EOF
-)
-
 # CDSW applies a too-strict check for selinux being disabled.
 # This requires that the cdsw node be rebooted, so instead we 
 # reduce the strength of the check to allow for selinux=permissive
@@ -114,6 +104,10 @@ patch <<\EOF
 EOF
 )
 
+# Re-enabling iptables. Cloudera Director disables iptables but K8s needs it.
+rm -rf /etc/modprobe.d/iptables-blacklist.conf
+modprobe iptable_filter
+
 # init cdsw
 # There have been rpcbind service problems preventing cdsw init from working
 # and this is an attempt to get around those issues:
@@ -121,7 +115,7 @@ systemctl stop rpcbind
 systemctl start rpcbind
 for i in {1..10}
 do
-  if cdsw reset && cdsw init
+  if cdsw reset && echo | cdsw init
   then
     break
   else
