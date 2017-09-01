@@ -18,13 +18,14 @@ exec >~/java8-bootstrap-script.log 2>&1
 # limitations under the License.
 
 # We remove any natively installed JDKs, as both Cloudera Manager and Cloudera Director only support Oracle JDKs
-yum remove --assumeyes *openjdk*
+yum remove --assumeyes *openjdk* oracle-j2sdk1.7*
 
-rpm --install --force "http://archive.cloudera.com/director/redhat/7/x86_64/director/2.5.0/RPMS/x86_64/oracle-j2sdk1.8-1.8.0+update121-1.x86_64.rpm"
+
+yum -y install http://archive.cloudera.com/director/redhat/7/x86_64/director/2.5.0/RPMS/x86_64/oracle-j2sdk1.8-1.8.0+update121-1.x86_64.rpm
 
 JAVA_HOME=/usr/java/jdk1.8.0_121-cloudera
-alternatives --install /usr/bin/java java ${JAVA_HOME:?}/bin/java 1
-alternatives --install /usr/bin/javac javac ${JAVA_HOME:?}/bin/javac 1
+alternatives --install /usr/bin/java java ${JAVA_HOME:?}/bin/java 10
+alternatives --install /usr/bin/javac javac ${JAVA_HOME:?}/bin/javac 10
 ln -nfs ${JAVA_HOME:?} /usr/java/latest
 ln -nfs /usr/java/latest /usr/java/default
 
