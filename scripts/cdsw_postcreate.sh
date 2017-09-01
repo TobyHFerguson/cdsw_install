@@ -40,14 +40,20 @@ function get_public_ip() {
 }
 
 function get_disk_name() {
-    lsblk -f | grep $1 | cut -f1 -d' '
+    lsblk --output NAME,MOUNTPOINT --noheadings | grep /data | cut -f1 -d' '
 }
 DOM="cdsw.$(get_public_ip).nip.io"
 MASTER=$(get_local_ip)
 # Because we only added two disks to the instance then they'll be the disks
-# mounted on /data0, /data1.
-DBD=/dev/$(get_disk_name data0)
-ABD=/dev/$(get_disk_name data1)
+# mounted on the /data drives
+# We arbitrarily choose the first disk for the Docker Block Device, and the second
+# for the Application Block Device
+DBD=/dev/$(get_disk_name | head -1)
+ABD=/dev/$(get_disk_name | tail -1)
+
+# If the device names are malformed then exit
+[ "$DBD" == "/dev/" ] && { echo "DBD disk not found: DBD=$DBD" 1>&2; exit 1; }
+[ "$ABD" == "/dev/" ] && { echo "ABD disk not found: ABD=$ABD" 1>&2; exit 1; }
 
 # Java default used - setup in java8-bootstrap-script.sh
 JH=/usr/java/default
@@ -58,9 +64,10 @@ sed -i -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" /etc/cdsw/config/cdsw.
 sed -i -e "s@\(APPLICATION_BLOCK_DEVICE=\).*@\1\"${ABD:?}\"@" /etc/cdsw/config/cdsw.conf
 sed -i -e "s@\(JAVA_HOME=\).*@\1${JH:?}@" /etc/cdsw/config/cdsw.conf
 
-sed -i '/\/data[01]/d' /etc/fstab
-umount /data0
-umount /data1
+## unmount & delete the /data mountpoints
+for mntpoint in $(lsblk --output MOUNTPOINT --noheadings | grep data); do umount $mntpoint; done
+sed -i '/\/data.*/d' /etc/fstab
+
 
 # CDSW prereq
 # Ensure that the ipv6 networking is NOT disabled - this can be done at boot time:
