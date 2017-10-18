@@ -42,7 +42,7 @@ function get_public_ip() {
 function get_disk_name() {
     lsblk --output NAME,MOUNTPOINT --noheadings | grep /data | cut -f1 -d' '
 }
-DOM="cdsw.$(get_public_ip).nip.io"
+DOM="cdsw.$(get_public_ip).xip.io"
 MASTER=$(get_local_ip)
 # Because we only added two disks to the instance then they'll be the disks
 # mounted on the /data drives
