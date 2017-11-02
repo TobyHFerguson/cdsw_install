@@ -28,9 +28,9 @@ The main configuration file is `$PROVIDER.conf`. This file itself includes the f
 * `$PROVIDER/owner_tag.properties` - a file containing the mandatory value for the `owner` tag which is used to tag all VM instances. Within the Cloudera FCE account a VM without an owner tag will be deleted. It is customary (but not enforced) to use your Cloudera id for this tag value.
 * `$PROVIDER/kerberos.properties` - an *optional* file containing the details of the Kerberos Key Distribution Center (KDC) to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an MIT KDC and use it). *If* `kerberos.properties` is provided then a secure cluster is set up. If `kerberos.properties` is not provided then an insecure cluster will be setup.
 
-For GCP you will need to ensure that the plugin supports rhel7. Do this by adding the following line to your `google.conf` file. This file should be located in the provider directory: `/var/lib/cloudera-director-plugins/google-provider-*/etc` (where the `*` matches the version - something like `1.0.4` - of your plugins). You will likely have to create your own copy of google.conf by copying `google.conf.example` located in the same directory
+For GCP you will need to ensure that the plugin supports rhel7. Do this by adding the following line to your `google.conf` file. This file should be located in the provider directory: `/var/lib/cloudera-director-plugins/google-provider-*/etc` (where the `*` matches the version - something like `1.0.4` - of your plugins). You will likely have to create your own copy of google.conf by copying `google.conf.example` located in the same directory. Note that the exact path to the relevant image is obtained by navigating to GCP's 'Images' section and finding the corresponding OS/URL pair.
 ```
-     rhel7 = "https://www.googleapis.com/compute/v1/projects/rhel-cloud/global/images/rhel-7-v20170523"
+     rhel7 = "https://www.googleapis.com/compute/v1/projects/rhel-cloud/global/images/rhel-7-v20171025"
 ```
 
 ## SECRET files
@@ -110,6 +110,33 @@ cloudera-director bootstrap-remote $PROVIDER.conf --lp.remote.username=admin --l
 
 All nodes in the cluster will contain the user `cdsw`. That user's password is `Cloudera1`. (If you used my mit kdc installation scripts from below then you'll also find that this user's kerberos username and password are `cdsw` and `Cloudera1` also).
 
+## Troubleshooting
+There are two logs of interest:
+* client log: $HOME/.cloudera-director/logs/application.log on client machine
+* server log: /var/log/cloudera-director-server/application.log on server machine
+
+If the cloudera-director client fails before communicating with the server you should look in the client log. Otherwise look in the server log.
+
+The server log can be large - I truncate it frequently; especially before using a new conf file!
+### GCP
+#### No Plugin
+If the client fails with this message:
+```sh
+* ErrorInfo{code=PROVIDER_EXCEPTION, properties={message=Mapping for image alias 'rhel7' not found.}, causes=[]}
+```
+then you've not configured the plugin for GCP, as detailed in the above section.
+#### Old Plugin
+If the client fails thus:
+```
+* Requesting an instance for Cloudera Manager ............ done
+* Installing screen package (1/1) .... done
+* Suspended due to failure ...
+```
+and the server log contains something like this:
+```
+peers certificate marked as not trusted by the user
+```
+then you've got a plugin configured, but its out of date. Go figure out the latest plugin URL and update the GCP plugins.
 
 
 ## Limitations & Issues
