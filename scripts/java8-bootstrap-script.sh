@@ -25,7 +25,6 @@ which java && java -version 2>&1 | grep -q 1.8.0_121 && { echo "Java 1.8 found. 
 
 echo "Java 1.8 needs to be installed"
 sudo rpm -ivh "https://archive.cloudera.com/director/redhat/7/x86_64/director/2.6.0/RPMS/x86_64/oracle-j2sdk1.8-1.8.0+update121-1.x86_64.rpm"
-#yum  install http://archive.cloudera.com/director/redhat/7/x86_64/director/2.5.0/RPMS/x86_64/oracle-j2sdk1.8-1.8.0+update121-1.x86_64.rpm
 
 JAVA_HOME=/usr/java/jdk1.8.0_121-cloudera
 sudo alternatives --install /usr/bin/java java ${JAVA_HOME:?}/bin/java 10
