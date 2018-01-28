@@ -1,12 +1,12 @@
 #!/bin/sh -x
 exec >~/instancePostCreateScripts.log 2>&1
 echo Starting instancePostCreateScript
-echo Adding supergroup and cdsw user
+#echo Adding supergroup and cdsw user
 
-groupadd supergroup
-useradd -G supergroup -u 12354 hdfs_super
-useradd -G supergroup -u 12345 cdsw
-echo Cloudera1 | passwd --stdin cdsw
+#groupadd supergroup
+#useradd -G supergroup -u 12354 hdfs_super
+#useradd -G supergroup -u 12345 cdsw
+#echo Cloudera1 | passwd --stdin cdsw
 
 # Check we're on the cdsw node
 if rpm -q cloudera-data-science-workbench 
