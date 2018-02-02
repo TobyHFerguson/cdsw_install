@@ -2,12 +2,8 @@
 exec >~/instancePostCreateScripts.log 2>&1
 echo Starting instancePostCreateScript
 
-if rpm -q cloudera-data-science-workbench 
-then
-echo "This is the CDSW node"
-
-function get_local_ip() {
-    hostname -i
+function isCDSWMaster() {
+    lsblk | grep "cdsw" | wc -l
 }
 
 function get_public_ip() {
@@ -26,11 +22,20 @@ function get_public_ip() {
     echo ${public_ip?:"no public ip found for this vm"}
 }
 
-DOM="cdsw.$(get_public_ip).nip.io"
-MASTER=$(get_local_ip)
+if [ $(isCDSWMaster) -eq 1 ]
+then
+echo "This is the CDSW master node"
 
-sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" /etc/cdsw/config/cdsw.conf
-sed -i -e "s/\(MASTER_IP=\).*/\1${MASTER:?}/"  /etc/cdsw/config/cdsw.conf
+serviceName=$(curl --user $CM_USERNAME:$CM_PASSWORD --request GET http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services  | grep "CD-CDSW" | grep "name" | cut -d ':' -f 2 | cut -d '"' -f2)
+
+config=$(curl --user $CM_USERNAME:$CM_PASSWORD --request GET http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services/$serviceName/config)
+
+cdswMasterPublicIp=$(get_public_ip)
+newConfig=$(echo $config| sed "s/cdsw.placeholder-domain.com/cdsw.$cdswMasterPublicIp.nip.io/g")
+
+curl --user $CM_USERNAME:$CM_PASSWORD -d "$newConfig" -H "Content-Type: application/json" -X PUT http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services/$serviceName/config
+
+curl --user $CM_USERNAME:$CM_PASSWORD -d "$serviceName" -X POST http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services/$serviceName/commands/restart
 
 fi
 exit 0
