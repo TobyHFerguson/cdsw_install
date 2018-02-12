@@ -34,5 +34,6 @@ ln -nfs /usr/java/latest /usr/java/default
 
 
 curl -v -j -k -L -O -H "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip
+yum -y install unzip
 unzip -o -j -d ${JAVA_HOME:?}/jre/lib/security jce_policy-8.zip
 
