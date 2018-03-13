@@ -2,19 +2,8 @@
 exec >~/instancePostCreateScripts.log 2>&1
 echo Starting instancePostCreateScript
 
-# Check we're on the cdsw node
-if rpm -q cloudera-data-science-workbench 
-then
-echo "This is the CDSW node"
-
-
-
-
-# install git
-yum -y install git
-
-function get_local_ip() {
-    hostname -i
+function isCDSWMaster() {
+    lsblk | grep "cdsw" | wc -l
 }
 
 function get_public_ip() {
@@ -33,101 +22,20 @@ function get_public_ip() {
     echo ${public_ip?:"no public ip found for this vm"}
 }
 
-function get_disk_name() {
-    lsblk --output NAME,MOUNTPOINT --noheadings | grep /data | cut -f1 -d' '
-}
-DOM="cdsw.$(get_public_ip).nip.io"
-MASTER=$(get_local_ip)
-# Because we only added two disks to the instance then they'll be the disks
-# mounted on the /data drives
-# We arbitrarily choose the first disk for the Docker Block Device, and the second
-# for the Application Block Device
-DBD=/dev/$(get_disk_name | head -1)
-ABD=/dev/$(get_disk_name | tail -1)
+if [ $(isCDSWMaster) -eq 1 ]
+then
+echo "This is the CDSW master node"
 
-# If the device names are malformed then exit
-[ "$DBD" == "/dev/" ] && { echo "DBD disk not found: DBD=$DBD" 1>&2; exit 1; }
-[ "$ABD" == "/dev/" ] && { echo "ABD disk not found: ABD=$ABD" 1>&2; exit 1; }
+serviceName=$(curl --user $CM_USERNAME:$CM_PASSWORD --request GET http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services  | grep "CD-CDSW" | grep "name" | cut -d ':' -f 2 | cut -d '"' -f2)
 
-# Java default used - setup in java8-bootstrap-script.sh
-JH=/usr/java/default
+config=$(curl --user $CM_USERNAME:$CM_PASSWORD --request GET http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services/$serviceName/config)
 
-sed -i -e "s/\(DOMAIN=\).*/\1${DOM:?}/" /etc/cdsw/config/cdsw.conf
-sed -i -e "s/\(MASTER_IP=\).*/\1${MASTER:?}/"  /etc/cdsw/config/cdsw.conf
-sed -i -e "s@\(DOCKER_BLOCK_DEVICES=\).*@\1\"${DBD:?}\"@" /etc/cdsw/config/cdsw.conf
-sed -i -e "s@\(APPLICATION_BLOCK_DEVICE=\).*@\1\"${ABD:?}\"@" /etc/cdsw/config/cdsw.conf
-sed -i -e "s@\(JAVA_HOME=\).*@\1${JH:?}@" /etc/cdsw/config/cdsw.conf
+cdswMasterPublicIp=$(get_public_ip)
+newConfig=$(echo $config| sed "s/cdsw.placeholder-domain.com/cdsw.$cdswMasterPublicIp.nip.io/g")
 
-## unmount & delete the /data mountpoints
-for mntpoint in $(lsblk --output MOUNTPOINT --noheadings | grep data); do umount $mntpoint; done
-sed -i '/\/data.*/d' /etc/fstab
+curl --user $CM_USERNAME:$CM_PASSWORD -d "$newConfig" -H "Content-Type: application/json" -X PUT http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services/$serviceName/config
 
-
-# CDSW prereq
-# Ensure that the ipv6 networking is NOT disabled - this can be done at boot time:
-echo "net.ipv6.conf.all.disable_ipv6=0" >>/etc/sysctl.conf
-
-sysctl -p
-
-systemctl enable rpcbind
-systemctl restart rpcbind
-systemctl restart rpc-statd
-
-# Ensure that the hard and soft limits on number of files is set so that cdsw is happy
-# First, set the limits permanently:
-cat >/etc/security/limits.d/90-nofile.conf <<EOF
-* soft nofile 1048576
-* hard nofile 1048576
-EOF
-
-# Then, set them in the currently running system:
-ulimit -n 1048576
-
-# CDSW applies a too-strict check for selinux being disabled.
-# This requires that the cdsw node be rebooted, so instead we 
-# reduce the strength of the check to allow for selinux=permissive
-
-(cd /etc/cdsw/scripts
-patch <<\EOF
---- -   2017-06-16 20:39:57.318975584 +0000
-+++ preinstall-validation.sh    2017-06-16 20:28:50.588007327 +0000
-@@ -74,9 +74,9 @@
- fi
- 
- echo -n "Prechecking that SELinux is disabled${PAUSE}"
--grep "^SELINUX=disabled" /etc/selinux/config &> /dev/null
-+grep -Ei "^SELINUX=(permissive|disabled)" /etc/selinux/config
- die_on_error $? "Please set SELINUX=disabled in /etc/selinux/config, then reboot"
--getenforce 2>/dev/null | grep 'Disabled' &> /dev/null
-+getenforce 2>/dev/null | grep -vi enforc &> /dev/null
- die_on_error $? "Please disable SELinux with setenforce 0"
- echo -e "${OK}"
-EOF
-)
-
-# Re-enabling iptables. Cloudera Director disables iptables but K8s needs it.
-rm -rf /etc/modprobe.d/iptables-blacklist.conf
-modprobe iptable_filter
-
-# init cdsw
-# There have been rpcbind service problems preventing cdsw init from working
-# and this is an attempt to get around those issues:
-systemctl stop rpcbind
-systemctl start rpcbind
-for i in {1..10}
-do
-  if cdsw reset && echo | cdsw init
-  then
-    break
-  else
-    systemctl restart rpcbind
-    sleep 1
-  fi
-done
-
-## Make sure that we add an auto restart script to the boot sequence
-echo "cdsw restart" >> /etc/rc.d/rc.local
-chmod a+x /etc/rc.d/rc.local
+curl --user $CM_USERNAME:$CM_PASSWORD -d "$serviceName" -X POST http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services/$serviceName/commands/restart
 
 fi
 exit 0
