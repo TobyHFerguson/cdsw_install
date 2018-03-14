@@ -33,6 +33,21 @@ For GCP you will need to ensure that the plugin supports rhel7. Do this by addin
      rhel7 = "https://www.googleapis.com/compute/v1/projects/rhel-cloud/global/images/rhel-7-v20171025"
 ```
 
+Assuming gloud is on your path, then this script will do exactly what you need:
+```
+sudo tee /var/lib/cloudera-director-plugins/google-provider-*/etc/google.conf 1>/dev/null <<EOF
+google {
+  compute {
+    imageAliases {
+      centos6="$(gcloud compute images list  --filter='name ~ centos-6-v.*' --uri)",
+      centos7="$(gcloud compute images list  --filter='name ~ centos-7-v.*' --uri)",
+      rhel6="$(gcloud compute images list  --filter='name ~ rhel-6-v.*' --uri)",
+      rhel7="$(gcloud compute images list  --filter='name ~ rhel-7-v.*' --uri)"
+    }
+  }
+}
+EOF 
+
 ## SECRET files
 SECRET files are ignored by GIT and you must construct them yourself. We recommend setting their mode to 600, although that is not enforced anywhere.
 ## AWS
