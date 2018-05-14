@@ -46,13 +46,14 @@ google {
     }
   }
 }
-EOF 
+EOF
+```
 
 ## SECRET files
 SECRET files are ignored by GIT and you must construct them yourself. We recommend setting their mode to 600, although that is not enforced anywhere.
 ## AWS
 The secret file for AWS is  `aws/SECRET.properties`. It is in Java Properties format and contains the AWS secret access key:
-```
+
 AWS_SECRET_ACCESS_KEY=
 ```
 Mine, with dots hiding characters from the secret key, looks like:
