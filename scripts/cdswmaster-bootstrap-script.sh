@@ -11,6 +11,7 @@ yum -y install iptables-services
 case $(dmidecode -s bios-version) in
     *Google*) APP_DISK=/dev/sdc;;
     *amazon*) APP_DISK=/dev/xvdg;;
+    090007*) APP_DISK=/dev/sdd;;
     *) echo "Unknown bios-version: $(dmidecode -s bios-version)" 1>&2; exit 1;;
 esac
 
