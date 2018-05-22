@@ -3,59 +3,45 @@ Automated installed of CDH 5.12, CDSW 1.1 with Director 2.5
 
 Basic idea is to have a single definition of a cluster which is shared across multiple cloud providers and to make it very simple for a user to say 'I want this cluster to be on cloud provider X, or cloud provider Y', confident that the cluster definition is the same; i.e. to separate out the cluster configuration that is independent of cloud providers from that which is unique to each provider and to make it easy for the user to indicate which cloud provider to use. 
 
-We support and test on two cloud providers (AWS and GCP), and the user choose which cloud provider to use by choosing the top level or provider conf file (`aws.conf` or `gcp.conf`).
+We support and test on three cloud providers (AWS, Azure and GCP), and the user choose which cloud provider to use by choosing the top level or provider conf file (`aws.conf`, `azure.conf` or `gcp.conf`).
+
+Building a cluster this way takes about an hour, AFTER which it can take up to an HOUR after the cluster is ready for CDSW to also be ready. I've seen this on Azure. CDSW on AWS and GCP seems to take around 10-20 mins to get ready to deliver service.
 
 ## File Organization
+
 ### Overview
 The system comprises a set of files, some common across cloud providers, and some specific to a particular cloud provider. The common files (and those which indicate which cloud provider to user) are all in the top level directory; the cloud provider specific files are cloud provider specific directories.
+
 ### File Kinds
 There are three kinds of files:
-+ Property Files - You are expected to modify these. They match the `*.properties` shell pattern and use the (Java Properties format)[https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-]
-+ Conf files - You are not expected to modify these. They match the `*.conf` shell pattern and use the (HOCON format)[https://github.com/typesafehub/config/blob/master/HOCON.md) format (a superset of JSON).
+
++ Property Files - You are expected to modify these. They match the `*.properties` shell pattern and use the [Java Properties format](https://docs.oracle.com/javase/8/docs/api/java/util/Properties.html#load-java.io.Reader-)
++ Conf files - You are not expected to modify these. They match the `*.conf` shell pattern and use the [HOCON format](https://github.com/typesafehub/config/blob/master/HOCON.md) (a superset of JSON).
 + SECRET files - these have the prefix `SECRET` and are used to hold secrets for each provider. The exact format is provider specific.
 
-The intent is that those items that you need to edit are in format (`*.properties` files) that is easy to edit, whereas those items that you don't need to touch are in the harder to edit HOCON format (i.e. `*.conf` files).
+The intent is that those items that you need to edit are in a format (i.e. `*.properties` files) that is easy to edit, whereas those items that you don't need to touch are in the harder to edit HOCON format (i.e. `*.conf` files).
 
 ### Directory Structure
-The top level directory contains the main `conf` files (`aws.conf` & `gcp.conf`). These are the files that indicate which cloud provider is to be used.
+The top level directory contains the main `conf` files (`aws.conf`, `azure.conf` & `gcp.conf`). These are the files that indicate which cloud provider is to be used.
 
-The `aws` and `gcp` directories contain the files relevant to each cloud provider. We'll reference the general notion of a provider directory using the `$PROVIDER` nomenclature, where `$PROVIDER` takes the value `aws` or `gcp`.
+The `aws`, `azure` and `gcp` directories contain the files relevant to each cloud provider. We'll reference the general notion of a provider directory using the `$PROVIDER` nomenclature, where `$PROVIDER` takes the value `aws`, `azure` or `gcp`.
 
 The main configuration file is `$PROVIDER.conf`. This file itself includes the files needed for the specific cloud provider. We will only describe the properties files here:
 
 * `$PROVIDER/provider.properties` - a file containing the provider configuration for Amazon Web Services
 * `$PROVIDER/ssh.properties` - a file containing the details required to configure passwordless ssh access into the machines that director will create.
-* `$PROVIDER/owner_tag.properties` - a file containing the mandatory value for the `owner` tag which is used to tag all VM instances. Within the Cloudera FCE account a VM without an owner tag will be deleted. It is customary (but not enforced) to use your Cloudera id for this tag value.
 * `$PROVIDER/kerberos.properties` - an *optional* file containing the details of the Kerberos Key Distribution Center (KDC) to be used for kerberos authentication. (See Kerberos Tricks below for details on how to easily setup an MIT KDC and use it). *If* `kerberos.properties` is provided then a secure cluster is set up. If `kerberos.properties` is not provided then an insecure cluster will be setup.
-
-For GCP you will need to ensure that the plugin supports rhel7. Do this by adding the following line to your `google.conf` file. This file should be located in the provider directory: `/var/lib/cloudera-director-plugins/google-provider-*/etc` (where the `*` matches the version - something like `1.0.4` - of your plugins). You will likely have to create your own copy of google.conf by copying `google.conf.example` located in the same directory. Note that the exact path to the relevant image is obtained by navigating to GCP's 'Images' section and finding the corresponding OS/URL pair.
-```
-     rhel7 = "https://www.googleapis.com/compute/v1/projects/rhel-cloud/global/images/rhel-7-v20171025"
-```
-
-Assuming gloud is on your path, then this script will do exactly what you need:
-```
-sudo tee /var/lib/cloudera-director-plugins/google-provider-*/etc/google.conf 1>/dev/null <<EOF
-google {
-  compute {
-    imageAliases {
-      centos6="$(gcloud compute images list  --filter='name ~ centos-6-v.*' --uri)",
-      centos7="$(gcloud compute images list  --filter='name ~ centos-7-v.*' --uri)",
-      rhel6="$(gcloud compute images list  --filter='name ~ rhel-6-v.*' --uri)",
-      rhel7="$(gcloud compute images list  --filter='name ~ rhel-7-v.*' --uri)"
-    }
-  }
-}
-EOF
-```
 
 ## SECRET files
 SECRET files are ignored by GIT and you must construct them yourself. We recommend setting their mode to 600, although that is not enforced anywhere.
+
 ## AWS
 The secret file for AWS is  `aws/SECRET.properties`. It is in Java Properties format and contains the AWS secret access key:
 
+```
 AWS_SECRET_ACCESS_KEY=
 ```
+
 Mine, with dots hiding characters from the secret key, looks like:
 ```
 AWS_SECRET_ACCESS_KEY=53Hrd................r0wiBbKn3
@@ -105,6 +91,7 @@ UC2sMUZ1rtLCv14qg4iiXuA/RExTs1zRaZZ0r4c\nTDiZwBJEbs0flCAziv7mJ4TZ3LfGKCtrTOhUWRw
 ```
 
 # Workflow
+
 ## Pre-requisites
 + Ensure that Director server is setup correctly
 + If using Kerberos check that you can construct a client and get a ticket from it.
@@ -128,19 +115,23 @@ All nodes in the cluster will contain the user `cdsw`. That user's password is `
 
 ## Troubleshooting
 There are two logs of interest:
-* client log: $HOME/.cloudera-director/logs/application.log on client machine
-* server log: /var/log/cloudera-director-server/application.log on server machine
+
++ client log: $HOME/.cloudera-director/logs/application.log on client machine
++ server log: /var/log/cloudera-director-server/application.log on server machine
 
 If the cloudera-director client fails before communicating with the server you should look in the client log. Otherwise look in the server log.
 
 The server log can be large - I truncate it frequently; especially before using a new conf file!
+
 ### GCP
+
 #### No Plugin
 If the client fails with this message:
 ```sh
 * ErrorInfo{code=PROVIDER_EXCEPTION, properties={message=Mapping for image alias 'rhel7' not found.}, causes=[]}
 ```
 then you've not configured the plugin for GCP, as detailed in the above section.
+
 #### Old Plugin
 If the client fails thus:
 ```
@@ -165,7 +156,7 @@ You'll need to set two YARN config variables by hand
 These are setup in the `common.conf` file, but if there's a problem (the values are inappropriate) then you'll see errors when you run a Spark job from CDSW in the CDSW project's console.
 
 ## NIP.io tricks
-(NIP.io)[http://nip.io] is a public bind server that uses the FQDN given to return an address. A simple explanation is if you have your kdc at IP address `10.3.4.6`, say, then you can refer to it as `kdc.10.3.4.6.nip.io` and this name will be resolved to `10.3.4.6` (indeed, `foo.10.3.4.6.nip.io` will likewise resolve to the same actual IP address). (Note that earlier releases of this project used `xip.io`, but that's located in Norway and for me in the USA `nip.io`, located in the Eastern US, works better.)
+[NIP.io](http://nip.io) is a public bind server that uses the FQDN given to return an address. A simple explanation is if you have your kdc at IP address `10.3.4.6`, say, then you can refer to it as `kdc.10.3.4.6.nip.io` and this name will be resolved to `10.3.4.6` (indeed, `foo.10.3.4.6.nip.io` will likewise resolve to the same actual IP address). (Note that earlier releases of this project used `xip.io`, but that's located in Norway and for me in the USA `nip.io`, located in the Eastern US, works better.)
 
 This technique is used in two places:
 + In the director conf file to specify the IP address of the KDC - instead of messing around with bind or `/etc/hosts` in a bootstrap script etc. simply set the KDC_HOST to `kdc.A.B.C.D.xip.io` (choosing appropriate values for A, B, C & D as per your setup)
@@ -174,10 +165,58 @@ This technique is used in two places:
 This is great for hacking around with ephemeral devices such as VMs and Cloud images!
 
 ## Useful Scripts
-I use [install_director.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh) to install director, and [install_mit_kdc.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh) to install an mit kdc. (There's also [install_mit_client.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh) to create a client for testing purposes.).  
-## Kerberos Tricks
-(Refer to the mit scripts linked above for details).
-## MIT KDC
+
+### Installing Director
+
+#### AWS 
+I simply setup a vm (4 CPUs, 16G RAM) and then use [install_director.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh) to install director.
+
+#### GCP
+I simply setup a vm (4 CPUs, 16G RAM) and then use [install_director.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh) to install director.
+
+##### GCP Director Configuration
+For GCP you will need to ensure that the plugin supports rhel7. Do this by adding the following line to your `google.conf` file. This file should be located in the provider directory: `/var/lib/cloudera-director-plugins/google-provider-*/etc` (where the `*` matches the version - something like `1.0.4` - of your plugins). You will likely have to create your own copy of google.conf by copying `google.conf.example` located in the same directory. Note that the exact path to the relevant image is obtained by navigating to GCP's 'Images' section and finding the corresponding OS/URL pair.
+```
+     rhel7 = "https://www.googleapis.com/compute/v1/projects/rhel-cloud/global/images/rhel-7-v20171025"
+```
+
+Assuming gcloud is on your path in that director instance, then this script will do exactly what you need:
+```
+sudo tee /var/lib/cloudera-director-plugins/google-provider-*/etc/google.conf 1>/dev/null <<EOF
+google {
+  compute {
+    imageAliases {
+      centos6="$(gcloud compute images list  --filter='name ~ centos-6-v.*' --uri)",
+      centos7="$(gcloud compute images list  --filter='name ~ centos-7-v.*' --uri)",
+      rhel6="$(gcloud compute images list  --filter='name ~ rhel-6-v.*' --uri)",
+      rhel7="$(gcloud compute images list  --filter='name ~ rhel-7-v.*' --uri)"
+    }
+  }
+}
+EOF
+```
+
+#### Azure
+Create a Cloudera Director by using the Microsoft Marketplace. In keeping with minimizing what you have to do this
+project assumes you have chosen the defaults whenever possible (e.g. networking etc)
+
+You'll need to note:
+* the Resource Group that the director instance is created in
+* The Region that the Resource Group is setup in
+* the public domain name prefix of the director instance. (i.e. the hostname and instance name of the director VM)
+* the host fqdn suffix (aka Private DNS domain name). This is the DNS zone in which the Director and cluster will be constructed.
+* the private IP address of the director instance that is created (if you're going to put an MIT KDC on the Director instance)
+
+
+### Installing MIT Kerberos
+If I choose to use MIT Kerberos I install the MIT KDC on the Director VM, no matter which cloud provider I'm using. 
+
+I do that using [install_mit_kdc.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh) to install an mit kdc. (There's also [install_mit_client.sh](https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh) to create a client for testing purposes.).  
+
+#### Further Details 
+(As implemented in the scripts referenced above - if you use those scripts then you don't need to read further, unless you're interested!)
+
+#### MIT KDC
 I setup an MIT KDC in the Director image and then create a `kerberos.conf` to use that:
 ```
 krbAdminUsername: "cm/admin@HADOOPSECURITY.LOCAL"
