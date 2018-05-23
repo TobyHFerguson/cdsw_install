@@ -21,7 +21,7 @@ readonly LABEL=cdsw
 echo "Making file system with label ${LABEL:?}"
 mkfs.ext4 -F -E lazy_itable_init=1 "${APP_DISK:?}" -m 0 -L ${LABEL:?}
 
-echo "Mounting ${APP_DISK:?} on ${mount:?}"
+echo "Mounting ${APP_DISK:?} on ${MOUNT:?}"
 mkdir -p "${MOUNT:?}"
 
 
