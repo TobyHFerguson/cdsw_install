@@ -165,11 +165,13 @@ to create a client for testing purposes.).
    :END:
 
 - Execute a director bootstrap command using the cloud provider you
-  chose:
+  chose, but make sure you do it from the top directory (i.e. the one where the =common.conf= file is located).
 
 #+BEGIN_SRC sh
     cloudera-director bootstrap-remote $PROVIDER.conf --lp.remote.username=admin --lp.remote.password=admin
 #+END_SRC
+
+See [[No provider]] for what happens if you're in the wrong directory.
 
 ** Post Creation
    :PROPERTIES:
@@ -375,6 +377,14 @@ server is running; especially before using a new conf file! Don't
 simply delete it; doing so will mess up the Director (unless the
 Director server is stopped)
 
+** No provider
+If you see this:
+
+#+BEGIN_EXAMPLE
+ * No provider configuration block found
+#+END_EXAMPLE
+
+then you've likely executed =cloudera-bootstrap= in the PROVIDER directory. You need to be in the top directory (where the =common.conf= file is) and execute =cloudera-bootstrap= there.
 ** GCP
     :PROPERTIES:
     :CUSTOM_ID: gcp-1
