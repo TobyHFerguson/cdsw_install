@@ -1,4 +1,4 @@
-* cdsw\_install
+* CDSW INSTALL
   :PROPERTIES:
   :CUSTOM_ID: cdsw_install
   :END:
@@ -59,7 +59,7 @@ It will make more sense if you read the [[Project Structure]] section.
      :END:
 
 I simply setup a vm (4 CPUs, 16G RAM) and then use
-[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh][install\_director.sh]]
+[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh][install_director.sh]]
 to install director.
 
 **** GCP
@@ -68,7 +68,7 @@ to install director.
      :END:
 
 I simply setup a vm (4 CPUs, 16G RAM) and then use
-[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh][install\_director.sh]]
+[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh][install_director.sh]]
 to install director.
 
 ***** GCP Director Configuration
@@ -135,9 +135,9 @@ If I choose to use MIT Kerberos I install the MIT KDC on the Director
 VM, no matter which cloud provider I'm using.
 
 I do that using
-[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh][install\_mit\_kdc.sh]]
+[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh][install_mit_kdc.sh]]
 to install an mit kdc. (There's also
-[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh][install\_mit\_client.sh]]
+[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh][install_mit_client.sh]]
 to create a client for testing purposes.).
 
 
@@ -151,6 +151,7 @@ to create a client for testing purposes.).
 - Ensure that all the files (including the SSH key file) is available to
   director (i.e copy or clone as necessary to the director server
   machine).
+- Ensure that the [[SECRET files]] are in place
 - Ensure that the =$PROVIDER/kerberos.properties= file is either absent
   (you don't want a kerberized cluster) or is present and correct (in
   particular you want to ensure that the =KDC_HOST_IP= property is set
@@ -265,7 +266,7 @@ SECRET files are ignored by GIT and you must construct them yourself. We
 recommend setting their mode to 600, although that is not enforced
 anywhere.
 
-** AWS
+*** AWS
    :PROPERTIES:
    :CUSTOM_ID: aws
    :END:
@@ -284,7 +285,7 @@ Mine, with dots hiding characters from the secret key, looks like:
 #+END_EXAMPLE
 
 If you fail to set up the =AWS_SECRET_KEY= then you'll find that
-cloudera-director silently fails, but grepping for AWS\_SECRET\_KEY in
+cloudera-director silently fails, but grepping for =AWS_SECRET_KEY= in
 the local log file will reveal all:
 
 #+BEGIN_SRC sh
@@ -307,6 +308,16 @@ message! But if you execute:
 
 You'll discover the problem! (Or there's another problem, and you should
 look in that log file for details).
+
+*** Azure
+ The secet file for Azure is called =SECRET.properties=. It contains a
+ single key value pair, where the key is =CLIENTSECRET=.
+
+Here's my =azure/SECRET.properties= file:
+
+#+BEGIN_EXAMPLE
+CLIENTSECRET=jhwf4Gf+ ... zD+e3k=
+#+END_EXAMPLE
 
 *** GCP
     :PROPERTIES:
@@ -341,7 +352,6 @@ replaced by dots, looks like:
       "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/tobys-service-account%40gcp-se.iam.gserviceaccount.com"
     }
 #+END_EXAMPLE
-
 
 * Troubleshooting
    :PROPERTIES:
