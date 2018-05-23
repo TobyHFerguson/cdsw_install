@@ -2,4 +2,4 @@
 tmp/*
 *.pem
 *.tar
-*.org
+.DS_STORE
