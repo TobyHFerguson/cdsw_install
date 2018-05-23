@@ -15,16 +15,17 @@ case $(dmidecode -s bios-version) in
     *) echo "Unknown bios-version: $(dmidecode -s bios-version)" 1>&2; exit 1;;
 esac
 
-mount="/var/lib/cdsw"
+readonly MOUNT=/var/lib/cdsw
+readonly LABEL=cdsw
 
-echo "Making file system"
-mkfs.ext4 -F -E lazy_itable_init=1 "$APP_DISK" -m 0
+echo "Making file system with label ${LABEL:?}"
+mkfs.ext4 -F -E lazy_itable_init=1 "${APP_DISK:?}" -m 0 -L ${LABEL:?}
 
-echo "Mounting $APP_DISK on $mount"
-mkdir -p "$mount"
+echo "Mounting ${APP_DISK:?} on ${mount:?}"
+mkdir -p "${MOUNT:?}"
 
 
-mount -o defaults,noatime "$APP_DISK" "$mount"
-echo "$APP_DISK $mount ext4 defaults,noatime 0 0" >> /etc/fstab
+echo "LABEL=${LABEL:?} ${MOUNT:?} ext4 defaults,noatime 0 0" >> /etc/fstab
+mount "LABEL=${LABEL:?}"
 
 exit 0
