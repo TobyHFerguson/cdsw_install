@@ -312,6 +312,9 @@ You'll discover the problem! (Or there's another problem, and you should
 look in that log file for details).
 
 *** Azure
+
+ Within Azure applications requiring access to an account are registered with in the tenant, and are assigned an authentication key, otherwise known as a client secret. This is documented in the [[https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal][Use portal to create an Azure Active Directory application and service principal that can access resources]] document. Within that document the section [[https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal#get-application-id-and-authentication-key][Get application ID and authentication key]] provides the details to get the application ID and authentication key, or client secret.
+
  The secet file for Azure is called =SECRET.properties=. It contains a
  single key value pair, where the key is =CLIENTSECRET=.
 
