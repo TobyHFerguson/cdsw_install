@@ -59,7 +59,7 @@ It will make more sense if you read the [[Project Structure]] section.
      :END:
 
 I simply setup a vm (4 CPUs, 16G RAM) and then use
-[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh][install_director.sh]]
+[[https://github.com/TobyHFerguson/director-scripts/blob/old_master/cloud-lab/scripts/install_director.sh][install_director.sh]]
 to install director.
 
 **** GCP
@@ -68,7 +68,7 @@ to install director.
      :END:
 
 I simply setup a vm (4 CPUs, 16G RAM) and then use
-[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_director.sh][install_director.sh]]
+[[https://github.com/TobyHFerguson/director-scripts/blob/old_master/cloud-lab/scripts/install_director.sh][install_director.sh]]
 to install director.
 
 ***** GCP Director Configuration
@@ -134,10 +134,8 @@ instance)
 If I choose to use MIT Kerberos I install the MIT KDC on the Director
 VM, no matter which cloud provider I'm using.
 
-I do that using
-[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_kdc.sh][install_mit_kdc.sh]]
-to install an mit kdc. (There's also
-[[https://github.com/TobyHFerguson/director-scripts/blob/master/cloud-lab/scripts/install_mit_client.sh][install_mit_client.sh]]
+I do that using [[https://github.com/TobyHFerguson/director-scripts/blob/old_master/cloud-lab/scripts/install_mit_kdc.sh][install_mit_kdc.sh]]
+to install an mit kdc. (There's also [[https://github.com/TobyHFerguson/director-scripts/blob/old_master/cloud-lab/scripts/install_mit_client.sh][install_mit_client.sh]]
 to create a client for testing purposes.).
 
 
@@ -313,7 +311,7 @@ look in that log file for details).
 
 *** Azure
 
- Within Azure applications requiring access to an account are registered with in the tenant, and are assigned an authentication key, otherwise known as a client secret. This is documented in the [[https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal][Use portal to create an Azure Active Directory application and service principal that can access resources]] document. Within that document the section [[https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal#get-application-id-and-authentication-key][Get application ID and authentication key]] provides the details to get the application ID and authentication key, or client secret.
+ Within Azure, applications requiring access to an account are registered in the tenant, and are assigned an authentication key, otherwise known as a client secret. This is documented in the [[https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal][Use portal to create an Azure Active Directory application and service principal that can access resources]] document. Within that document the section [[https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal#get-application-id-and-authentication-key][Get application ID and authentication key]] provides the details to get the application ID and authentication key, or client secret.
 
  The secet file for Azure is called =SECRET.properties=. It contains a
  single key value pair, where the key is =CLIENTSECRET=.
