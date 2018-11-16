@@ -117,14 +117,12 @@ Create a Cloudera Director by using the Microsoft Marketplace. In
 keeping with minimizing what you have to do this project assumes you
 have chosen the defaults whenever possible (e.g. networking etc)
 
-You'll need to note: * the Resource Group that the director instance is
-created in * The Region that the Resource Group is setup in * the public
-domain name prefix of the director instance. (i.e. the hostname and
-instance name of the director VM) * the host fqdn suffix (aka Private
-DNS domain name). This is the DNS zone in which the Director and cluster
-will be constructed. * the private IP address of the director instance
-that is created (if you're going to put an MIT KDC on the Director
-instance)
+You'll need to note: 
+- the Resource Group that the director instance is created in 
+- The Region that the Resource Group is setup in 
+- the publicdomain name prefix of the director instance. (i.e. the hostname and instance name of the director VM) 
+- the host fqdn suffix (aka Private DNS domain name). This is the DNS zone in which the Director and cluster will be constructed. 
+- the private IP address of the director instance that is created (if you're going to put an MIT KDC on the Director instance)
 
 *** Installing MIT Kerberos (optional)
     :PROPERTIES:
